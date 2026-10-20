@@ -3,12 +3,14 @@ const { app, BrowserWindow, dialog, shell, ipcMain, screen } = require('electron
 const path = require('node:path');
 const fs = require('node:fs');
 const { once } = require('node:events');
+const { boundsForLayout } = require('./layout.cjs');
 
 app.setAppUserModelId('com.cyberspectraa.memebuddies');
 const gotLock = app.requestSingleInstanceLock();
 let dashboard = null;
 let desktopOverlay = null;
 let selectedDisplayId = null;
+let overlayLayout = 'portrait'; // Vertical TikTok 9:16 is the default.
 const BASE_URL = 'http://127.0.0.1:3927';
 
 function displays() {
@@ -25,17 +27,22 @@ function chosenDisplay() {
   const all = screen.getAllDisplays();
   return all.find(display => String(display.id) === selectedDisplayId) || screen.getPrimaryDisplay();
 }
+function overlayBounds(display = chosenDisplay()) {
+  return boundsForLayout(display.bounds, overlayLayout);
+}
 function desktopState() {
   return {
     available: true,
     visible: Boolean(desktopOverlay && !desktopOverlay.isDestroyed() && desktopOverlay.isVisible()),
     displayId: selectedDisplayId || String(screen.getPrimaryDisplay().id),
+    layout: overlayLayout,
+    bounds: overlayBounds(),
     displays: displays()
   };
 }
 function placeOverlay() {
   if (!desktopOverlay || desktopOverlay.isDestroyed()) return;
-  desktopOverlay.setBounds(chosenDisplay().bounds, false);
+  desktopOverlay.setBounds(overlayBounds(), false);
 }
 async function showDesktopOverlay() {
   if (desktopOverlay && !desktopOverlay.isDestroyed()) {
@@ -43,9 +50,8 @@ async function showDesktopOverlay() {
     desktopOverlay.showInactive();
     return;
   }
-  const display = chosenDisplay();
   desktopOverlay = new BrowserWindow({
-    ...display.bounds,
+    ...overlayBounds(),
     title: 'Meme Buddies Desktop Overlay',
     show: false,
     frame: false,
@@ -112,7 +118,7 @@ if (!gotLock) {
       if (!isDashboard(event)) throw new Error('Access denied');
       return desktopState();
     });
-    ipcMain.handle('desktop:set-visible', async (event, visible, displayId) => {
+    ipcMain.handle('desktop:set-visible', async (event, visible, displayId, layout) => {
       if (!isDashboard(event)) throw new Error('Access denied');
       if (displayId !== undefined && displayId !== null) {
         const id = String(displayId);
@@ -120,6 +126,11 @@ if (!gotLock) {
           throw new Error('The selected monitor is no longer connected');
         }
         selectedDisplayId = id;
+      }
+      if (layout !== undefined && layout !== null) {
+        if (!['portrait','full'].includes(layout)) throw new Error('Invalid overlay layout');
+        overlayLayout = layout;
+        placeOverlay();
       }
       if (visible === true) await showDesktopOverlay();
       else if (visible === false) hideDesktopOverlay();

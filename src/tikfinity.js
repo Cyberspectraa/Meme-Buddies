@@ -50,7 +50,7 @@ export class TikFinitySource {
       if (!this.active || this.socket !== socket) return;
       try {
         const packet = JSON.parse(String(payload));
-        if ((packet?.event === 'gift' || packet?.event === 'chat') && packet.data && typeof packet.data === 'object') {
+        if (['gift', 'chat', 'like', 'follow', 'share', 'subscribe', 'member', 'roomUser'].includes(packet?.event) && packet.data && typeof packet.data === 'object') {
           this.onEvent(packet.event, packet.data);
         }
       } catch (error) {

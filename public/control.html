@@ -17,7 +17,7 @@ code{color:#f4d9ff;background:#38294c;padding:3px 7px;border-radius:5px}
 #feedback{min-height:20px;color:#f5b7dc;font-size:13px}#files{font-size:13px;color:#bfbad0;line-height:1.8}
 @media(max-width:750px){.grid{grid-template-columns:1fr}header{align-items:start}main{padding:24px 12px}.card{padding:17px}.line{flex-wrap:wrap}}
 </style></head>
-<body><main><header><div class="logo">MB</div><div><h1>Meme Buddies</h1><p>Top 3 TikTok gifters. Mischievous profile-picture pets.</p></div></header>
+<body><main><header><div class="logo">MB</div><div><h1>Meme Buddies</h1><p>Top 3 active TikTok viewers. Mischievous profile-picture pets.</p></div></header>
 <div class="grid">
 <section class="card"><h2>Live connection <span id="status" class="status">Idle</span></h2><p class="muted" id="message">Test mode ready</p>
 <p class="muted" style="margin-top:14px">1. Open <a href="https://tikfinity.com/" target="_blank" rel="noopener" style="margin:0">TikFinity Desktop</a> on this PC and connect it to your TikTok LIVE.<br>2. Click below to connect Meme Buddies to TikFinity's local Event API.<br>3. Keep both apps running during the stream.</p>
@@ -28,19 +28,21 @@ code{color:#f4d9ff;background:#38294c;padding:3px 7px;border-radius:5px}
 <div class="line"><input id="url" readonly><button class="alt" id="copy">Copy</button></div>
 <a href="/overlay" target="_blank" rel="noopener">Open overlay preview ↗</a></section>
 <section class="card">
-<h2>Desktop overlay <span class="status" id="desktopState">OFF</span></h2>
-<p class="muted">Recommended for TikTok LIVE Studio when the Link/Browser source rejects localhost. Draw the buddies directly on one of your monitors, without entering any URL.</p>
+<h2>Portrait LIVE overlay <span class="status" id="desktopState">OFF</span></h2>
+<p class="muted">Designed for regular vertical TikTok LIVE. The default is a centred 9:16 transparent strip on your monitor instead of a gaming-style widescreen overlay.</p>
 <label for="desktopDisplay">Choose monitor to capture</label>
 <div class="line"><select id="desktopDisplay"><option value="">Checking displays...</option></select><button id="toggleDesktop" type="button">Show buddies</button></div>
+<label for="desktopLayout">Stage shape</label><select id="desktopLayout"><option value="portrait">Portrait 9:16 (recommended)</option><option value="full">Whole monitor (gaming layout)</option></select>
 <p id="desktopMessage" class="muted" style="margin-top:11px">The overlay is hidden until you enable it.</p>
-<p class="rules"><strong>LIVE Studio setup:</strong> Add source → <strong>Display Capture</strong> → select the same monitor. The transparent buddies will appear above your desktop. <strong>Game Capture</strong> or <strong>Window Capture</strong> won't reliably include a separate desktop overlay. Test the LIVE Studio preview before streaming.</p>
+<p class="rules"><strong>LIVE Studio setup:</strong> Select a 9:16 Portrait scene and <strong>Display Capture</strong> the same monitor. Crop to the <strong>central portrait strip</strong>. Preview using TikTok's <strong>General</strong> mobile view. This method captures your desktop too, including open windows, so hide anything private. Game/Window Capture may miss the separate buddies.</p>
 </section>
-<section class="card"><h2>Top 3 gifters</h2><p class="muted">Ranked by gifts received while Meme Buddies is running (or since Reset). Reconnecting preserves the ranking.</p>
+<section class="card"><h2>Top 3 active viewers</h2><p class="muted">Points for chat, likes, shares, follows, subscriptions and gifts. Our activity leaderboard—not an official TikTok viewer ranking. You can reset between lives.</p>
 <ol id="top"><li class="muted">No gifts yet</li></ol>
 <p class="rules">Only these 3 viewers can type <code>!meme</code> to drag a random PNG.</p>
 <div class="bottom"><span>Global cooldown: 2 minutes</span><strong id="cooldown">Ready</strong></div></section>
-<section class="card"><h2>Test without going live</h2><p class="muted">Test locally before the show; test gifts will affect the overlay until you reset.</p>
+<section class="card"><h2>Test without going live</h2><p class="muted">Test gifts and general activity locally. Simulated activity counts until reset.</p>
 <form id="gift"><label>Simulate a supporter sending a gift</label><div class="line"><input id="testUser" required value="goose_lover" placeholder="Viewer username"><input id="diamonds" type="number" min="1" max="100000" value="25"><button>Test gift</button></div></form>
+<form id="activity"><label>Simulate viewer activity</label><div class="line"><input id="activityUser" placeholder="viewer name" value="chatty_user" required><select id="activityType"><option value="chat">Comment</option><option value="like">10 likes</option><option value="share">Share</option><option value="follow">Follow</option><option value="member">Join</option><option value="subscribe">Subscribe</option></select><button>Test activity</button></div></form>
 <form id="meme"><label>Simulate a current top-3 person typing !meme</label><div class="line"><select id="memeUser"><option value="">Add a test gifter first</option></select><button>Test !meme</button></div></form>
 <button id="reset" class="warn">Reset leaderboard + cooldown</button><p id="feedback" role="status"></p></section>
 <section class="card"><h2>PNG meme library <span id="count" class="status">0 files</span></h2>
@@ -76,7 +78,7 @@ function render(data) {
   if(!p){li.textContent='No gifters yet';return li;}
   const rank=document.createElement('strong');rank.textContent='#'+p.rank;
   const name=document.createElement('span');name.textContent='@'+p.username;
-  const score=document.createElement('strong');score.textContent=p.diamonds+' 💎';
+  const score=document.createElement('strong');score.textContent=p.points+' pts';score.title=p.diamonds+' gift diamonds';
   li.append(rank,name,score);return li;
  }));
  $('memeUser').replaceChildren(...data.top3.map(p=>{
@@ -94,6 +96,7 @@ function updateClock() {
 let desktopVisible=false;
 function renderDesktop(state){
  desktopVisible=!!state.visible;
+ $('desktopLayout').value=state.layout||'portrait';
  $('desktopState').textContent=desktopVisible?'ON':'OFF';
  $('toggleDesktop').textContent=desktopVisible?'Hide buddies':'Show buddies';
  const previous=$('desktopDisplay').value;
@@ -122,7 +125,7 @@ $('toggleDesktop').onclick=async()=>{
  const button=$('toggleDesktop');
  button.disabled=true;
  try{
-  const state=await window.memeDesktop.setOverlayVisible(!desktopVisible,$('desktopDisplay').value);
+  const state=await window.memeDesktop.setOverlayVisible(!desktopVisible,$('desktopDisplay').value,$('desktopLayout').value);
   renderDesktop(state);
   $('feedback').textContent=state.visible?'Desktop overlay shown':'Desktop overlay hidden';
  }catch(error){$('desktopMessage').textContent='Desktop overlay error: '+error.message;}
@@ -130,13 +133,19 @@ $('toggleDesktop').onclick=async()=>{
 };
 $('desktopDisplay').onchange=async()=>{
  if(!window.memeDesktop)return;
- try{renderDesktop(await window.memeDesktop.setOverlayVisible(desktopVisible,$('desktopDisplay').value));}
+ try{renderDesktop(await window.memeDesktop.setOverlayVisible(desktopVisible,$('desktopDisplay').value,$('desktopLayout').value));}
  catch(error){$('desktopMessage').textContent='Could not change display: '+error.message;}
+};
+$('desktopLayout').onchange=async()=>{
+ if(!window.memeDesktop)return;
+ try{renderDesktop(await window.memeDesktop.setOverlayVisible(desktopVisible,$('desktopDisplay').value,$('desktopLayout').value));}
+ catch(error){$('desktopMessage').textContent='Could not change layout: '+error.message;}
 };
 $('connect').addEventListener('submit',async e=>{e.preventDefault();await post('connect');});
 $('disconnect').onclick=()=>post('disconnect');
 $('reset').onclick=()=>post('reset');
 $('gift').addEventListener('submit',async e=>{e.preventDefault();await post('test/gift',{username:$('testUser').value,diamonds:Number($('diamonds').value)});});
+$('activity').addEventListener('submit',async e=>{e.preventDefault();await post('test/activity',{username:$('activityUser').value,type:$('activityType').value});});
 $('meme').addEventListener('submit',async e=>{e.preventDefault();await post('test/chat',{username:$('memeUser').value});});
 $('openFolder').onclick=async()=>{try{if(!window.memeDesktop)throw new Error('Open the portable desktop app to use this button');const result=await window.memeDesktop.openMemesFolder();if(result)throw new Error(result);$('feedback').textContent='Opened memes folder';}catch(e){$('feedback').textContent=e.message;}};
 $('copy').onclick=async()=>{await navigator.clipboard.writeText($('url').value);$('feedback').textContent='Overlay link copied';};

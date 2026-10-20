@@ -68,7 +68,13 @@ function connect() {
     },
     onEvent(eventName, data) {
       if (eventName === 'gift') gift(data);
-      if (eventName === 'chat') comment(data);
+      if (eventName === 'chat') {
+        if (engine.recordActivity('chat', data)) pushState();
+        comment(data);
+      }
+      if (['like','follow','share','subscribe','member','roomUser'].includes(eventName)) {
+        if (engine.recordActivity(eventName, data)) pushState();
+      }
     }
   });
   live.start();
@@ -151,6 +157,19 @@ const server = http.createServer(async (req, res) => {
         return json(res, 400, { error: 'Enter a username and 1–100000 diamonds' });
       }
       gift({ user: { userId: 'test:' + username.toLowerCase(), uniqueId: username }, diamondCount: diamonds });
+      return json(res, 200, snapshot());
+    }
+    if (url.pathname === '/api/test/activity') {
+      const username = String(data.username || '').trim().replace(/^@/, '').slice(0, 40);
+      const type = String(data.type || '');
+      if (!/^[a-zA-Z0-9._]{2,40}$/.test(username) || !['chat','like','follow','share','member','subscribe'].includes(type)) {
+        return json(res, 400, { error: 'Choose a valid test username and activity type' });
+      }
+      const user = { userId: 'test:' + username.toLowerCase(), uniqueId: username };
+      const eventData = type === 'chat' ? { user, comment: 'Hello LIVE!' }
+        : type === 'like' ? { user, likeCount: 10 }
+        : { user };
+      if (engine.recordActivity(type, eventData)) pushState();
       return json(res, 200, snapshot());
     }
     if (url.pathname === '/api/test/chat') {
