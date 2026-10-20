@@ -17,15 +17,18 @@ body{user-select:none;pointer-events:none;font-family:system-ui,"Segoe UI",sans-
 .buddy.sprinting .face{animation:sprint .12s infinite alternate ease-in-out}
 @keyframes waddle{from{transform:rotate(-5deg) translateY(-2px)}to{transform:rotate(5deg) translateY(2px)}}
 @keyframes sprint{from{transform:rotate(-13deg) translateY(-4px)}to{transform:rotate(13deg) translateY(3px)}}
-.meme-window{position:absolute;top:0;left:0;display:block;width:clamp(145px,41vw,280px);border-radius:6px;overflow:hidden;border:2px solid #f8f8ff;background:#fff;box-shadow:0 12px 32px #0009;will-change:transform,opacity;z-index:4;transform-origin:center center}
-.meme-bar{height:29px;background:linear-gradient(110deg,#fafbff,#dfe5ff);display:flex;align-items:center;justify-content:space-between;gap:6px;color:#252743;padding:0 9px;font:700 12px "Segoe UI",sans-serif}
-.meme-bar .controls{letter-spacing:5px;font-size:13px;color:#4e537a;white-space:nowrap}
-.meme-window img{width:100%;max-height:clamp(150px,25vh,270px);height:auto;object-fit:contain;display:block}
+.meme-window{position:absolute;top:0;left:0;border-radius:11px;overflow:hidden;border:1px solid #c9c7dc;background:#f9f8ff;box-shadow:0 16px 30px #0007,0 2px 8px #0006;will-change:transform,opacity;z-index:4;transform-origin:center;pointer-events:none}
+.meme-bar{height:28px;background:linear-gradient(90deg,#eeeafc,#f8f6ff);display:flex;align-items:center;gap:7px;color:#27213e;padding:0 9px;border-bottom:1px solid #d9d3ed;font:750 11px "Segoe UI",sans-serif}
+.meme-bar .dot{flex:none;width:8px;height:8px;border-radius:50%;background:#b47ae9;box-shadow:0 0 0 2px #b47ae929}
+.meme-bar .file-name{min-width:0;flex:1;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.meme-bar .controls{color:#7e749d;white-space:nowrap;letter-spacing:3px;font-size:12px}
+.meme-content{display:grid;place-items:center;background:repeating-conic-gradient(#f7f5ff 0% 25%,#eeebfa 0% 50%) 50% / 20px 20px;padding:5px;overflow:hidden}
+.meme-content img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px #24203530)}
 .tether{position:absolute;top:0;left:0;height:3px;border-radius:5px;background:repeating-linear-gradient(90deg,#d8be9e,#d8be9e 7px,#9c734b 7px,#9c734b 11px);transform-origin:left center;filter:drop-shadow(0 1px 3px #0007);pointer-events:none;z-index:4}
 .trail{position:absolute;width:10px;height:15px;border-radius:60%;background:#30304590;filter:blur(2px);pointer-events:none;z-index:2;animation:vanish 1.3s forwards}
 @keyframes vanish{to{opacity:0;transform:scale(.35)}}
 </style></head>
-<body><div id="stage"></div><script>
+<body><div id="stage"></div><script src="/drag-geometry.js"></script><script>
 const stage=document.getElementById('stage');
 const buddies=new Map();
 let previousTime=0;
@@ -83,45 +86,64 @@ function setState(state){
   updateBuddy(b,p);
  });
 }
-function memeWindow(filename){
+const G=globalThis.MemeDragGeometry;
+if(!G)throw new Error('Meme drag geometry failed to load');
+function memeWindow(filename,username,popup){
  const el=document.createElement('div');el.className='meme-window';
  const title=document.createElement('div');title.className='meme-bar';
- const label=document.createElement('span');label.textContent='🖼 Meme.jpg';
- const buttons=document.createElement('span');buttons.className='controls';buttons.textContent='– □ ×';
- title.append(label,buttons);
- const img=document.createElement('img');img.alt='meme';
+ const dot=document.createElement('span');dot.className='dot';
+ const label=document.createElement('span');label.className='file-name';
+ label.textContent='@'+username+' dragged in a meme';
+ const controls=document.createElement('span');controls.className='controls';controls.textContent='— □ ×';
+ title.append(dot,label,controls);
+ const content=document.createElement('div');content.className='meme-content';
+ const img=document.createElement('img');img.alt='Random meme';
  img.src='/memes/'+encodeURIComponent(filename);
- img.onerror=()=>el.remove();
- el.append(title,img);stage.append(el);
- return el;
+ img.onerror=()=>{content.textContent='Meme image unavailable';};
+ content.append(img);
+ el.append(title,content);
+ el.style.width=popup.width+'px';
+ content.style.height=popup.imageHeight+'px';
+ stage.append(el);
+ return {el,content};
 }
 function clearAction(a){
  if(!a)return;
  if(a.rope)a.rope.remove();
  if(a.prop)a.prop.remove();
 }
+function actorDropPosition(side,popup){
+ const at=side==='left'?popup.x+popup.width-25:popup.x-58;
+ return G.clamp(at,leftBound(),rightBound());
+}
+function layoutAction(a){
+ a.popup=G.placePopup(innerWidth,innerHeight,a.seedX,a.seedY);
+ a.actorDropX=actorDropPosition(a.side,a.popup);
+ if(a.prop)a.prop.style.width=a.popup.width+'px';
+ if(a.content)a.content.style.height=a.popup.imageHeight+'px';
+ a.homeX=homeX(a.index,Math.max(1,buddies.size));
+}
 function startMeme(event){
  const b=buddies.get(event.userId);
  if(!b)return;
  if(b.action)clearAction(b.action);
- const dir=b.x<(leftBound()+rightBound())/2?-1:1;
- const exit=dir<0?-115:innerWidth+115;
- const prop=memeWindow(event.filename);
- const rope=document.createElement('div');rope.className='tether';stage.append(rope);
- b.action={start:performance.now(),startX:b.x,exitX:exit,dir,prop,rope,
-   dropX:clamp(leftBound()+Math.random()*(rightBound()-leftBound()),leftBound(),rightBound()),
-   dropY:clamp(lowerBand()-innerHeight*(portrait()?.15:.24),40,lowerBand()-50),
-   windowWidth:clamp(innerWidth*(portrait()?.35:.25),145,245),lastTrail:0};
- prop.style.width=b.action.windowWidth+'px';
+ const side=b.x<(leftBound()+rightBound())*.5?'left':'right';
+ const a={start:performance.now(),index:b.index,side,startX:b.x,
+   seedX:Math.random(),seedY:Math.random(),lastTrail:0,
+   prop:null,content:null,rope:null,homeX:0};
+ layoutAction(a); // Calculate the safe placement before creating an element.
+ const popup=memeWindow(event.filename,event.username,a.popup);
+ a.prop=popup.el;a.content=popup.content;
+ a.rope=document.createElement('div');a.rope.className='tether';a.rope.style.visibility='hidden';stage.append(a.rope);
+ b.action=a;
  b.el.classList.add('sprinting');
 }
 function footprints(x,y){
- if(Math.random()>.2)return;
+ if(Math.random()>.27)return;
  const e=document.createElement('span');e.className='trail';
  e.style.left=(x+37)+'px';e.style.top=(y+70)+'px';stage.append(e);
  setTimeout(()=>e.remove(),1300);
 }
-function smooth(p){p=clamp(p,0,1);return p*p*(3-2*p);}
 function positionRope(a,x1,y1,x2,y2){
  const dx=x2-x1,dy=y2-y1;
  a.rope.style.width=Math.hypot(dx,dy)+'px';
@@ -130,65 +152,46 @@ function positionRope(a,x1,y1,x2,y2){
 function advanceAction(b,t){
  const a=b.action;
  const age=(t-a.start)/1000;
- const floor=lowerBand();
- const dropX=a.dropX, dropY=a.dropY;
- let x=b.x,y=floor,winX=dropX-a.windowWidth*.7,winY=dropY;
- let attached=false, visible=true,angle=0;
- if(age<.65){ // RUN OFF-SCREEN TO FETCH A MEME
-  const q=smooth(age/.65);
-  x=a.startX+(a.exitX-a.startX)*q;
-  y=floor-18*Math.sin(q*Math.PI);
-  visible=false;
- }else if(age<1){ // JUST OFF-SCREEN
-  x=a.exitX;y=floor;visible=false;
- }else if(age<3.5){ // RETURN DRAGGING THE MEME WINDOW BEHIND YOU
-  const q=smooth((age-1)/2.5);
-  x=a.exitX+(dropX-a.exitX)*q;
-  y=floor+(dropY-floor)*q+Math.sin(q*18)*5;
-  winX=x-a.dir*a.windowWidth*.8;
-  winY=y-30+Math.sin(q*11)*9;
-  angle=8*Math.sin(q*13);
-  attached=true;
- }else if(age<4.15){ // SLAM / DROP
-  const q=(age-3.5)/.65;
-  x=dropX;y=dropY+Math.sin(q*18)*(1-q)*10;
-  winX=dropX-a.dir*a.windowWidth*.8;
-  winY=dropY-30+Math.abs(Math.sin(q*Math.PI))*(18-q*18);
-  angle=10*Math.sin(q*17)*(1-q);
-  attached=q<.6;
- }else if(age<5.2){ // ESCAPE AFTER THE PRANK
-  const q=smooth((age-4.15)/1.05);
-  const finalX=a.dir<0?innerWidth+120:-120;
-  x=dropX+(finalX-dropX)*q;
-  y=dropY+(floor-dropY)*q-20*Math.sin(q*Math.PI);
-  winX=dropX-a.dir*a.windowWidth*.8;winY=dropY-30;
- }else if(age<6.1){ // RETURN TO WANDERING POSITION
-  const q=smooth((age-5.2)/.9);
-  const fromX=a.dir<0?innerWidth+120:-120;
-  x=fromX+(homeX(b.index,Math.max(1,buddies.size))-fromX)*q;
-  y=floor;winX=dropX-a.dir*a.windowWidth*.8;winY=dropY-30;
- }else{
-  x=homeX(b.index,Math.max(1,buddies.size));y=floor;
-  if(a.rope)a.rope.remove();
-  a.rope=null;
-  const img=a.prop;
-  // Keep the fake desktop meme window resting on the scene, then gently fade it.
-  img.style.transition='opacity 1s ease';
-  setTimeout(()=>{img.style.opacity='0';setTimeout(()=>img.remove(),1050);},1900);
-  b.action=null;b.el.classList.remove('sprinting');
-  b.nextExplore=t+13000;
-  return {x,y};
+ const frame=G.dragFrame(age,{
+   popup:a.popup,side:a.side,actorStartX:a.startX,
+   actorDropX:a.actorDropX,homeX:a.homeX,floor:lowerBand()
+ });
+ a.prop.style.visibility=frame.showProp?'visible':'hidden';
+ a.prop.style.transform='translate3d('+frame.propX+'px,'+frame.propY+'px,0) rotate('+frame.angle+'deg)';
+ if(frame.attached&&a.rope){
+   a.rope.style.visibility='visible';
+   const grabX=frame.propX+(a.side==='left'?a.popup.width-10:10);
+   positionRope(a,frame.buddyX+42,frame.buddyY+38,grabX,frame.propY+14);
+ }else if(a.rope){
+   a.rope.style.visibility='hidden';
  }
- b.action && (b.action.finalWinX=winX);
- a.prop.style.transform='translate3d('+winX+'px,'+winY+'px,0) rotate('+angle+'deg)';
- a.prop.style.visibility=visible?'visible':'hidden';
- if(a.rope){
-  if(attached){a.rope.style.visibility='visible';positionRope(a,x+39,y+36,winX+(a.dir<0?a.windowWidth:0),winY+25);}
-  else a.rope.style.visibility='hidden';
+ if((frame.phase==='fetch'||frame.phase==='drag'||frame.phase==='escape')&&t-a.lastTrail>210){
+   footprints(frame.buddyX,frame.buddyY);a.lastTrail=t;
  }
- if(t-a.lastTrail>240){footprints(x,y);a.lastTrail=t;}
- return {x,y};
+ if(frame.phase==='finished'){
+   if(a.rope)a.rope.remove();
+   const prop=a.prop;
+   // Drop remains completely in the safe scene area, visible for 2.5s before fading.
+   prop.style.transform='translate3d('+a.popup.x+'px,'+a.popup.y+'px,0)';
+   prop.style.opacity='1';
+   setTimeout(()=>{
+     if(!prop.isConnected)return;
+     prop.style.transition='opacity .7s ease';
+     prop.style.opacity='0';
+     setTimeout(()=>prop.remove(),750);
+   },2500);
+   b.action=null;
+   b.el.classList.remove('sprinting');
+   b.nextExplore=t+11000;
+ }
+ return {x:frame.buddyX,y:frame.buddyY};
 }
+window.addEventListener('resize',()=>{
+ for(const b of buddies.values()){
+   b.x=G.clamp(b.x,leftBound(),rightBound());
+   if(b.action)layoutAction(b.action);
+ }
+});
 function animate(t){
  const dt=Math.min(.05,Math.max(0,(t-previousTime)/1000||0));previousTime=t;
  for(const b of buddies.values()){

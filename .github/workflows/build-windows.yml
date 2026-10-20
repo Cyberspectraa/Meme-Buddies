@@ -37,10 +37,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "v0.6.0"
+          $tag = "v0.6.1"
           gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Meme Buddies v0.6.0" --notes "Portable Windows x64 desktop pet app for TikTok LIVE moderators. Only active moderators (automatically recognised or manually allowlisted in mods.txt) get PFP buddies. !meme triggers a Goose-style run, fake popup drag, drop, and escape animation with a shared 10-second cooldown. Connect through TikFinity Desktop, put PNG memes in the folder beside the EXE, and use Display Capture in TikTok LIVE Studio. Unsigned; Windows may warn."
+            gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Meme Buddies v0.6.1" --notes "Patch v0.6.1: reworked Goose-style meme dragging with a smoother tethered run-in, compact meme window, gentle drop and guaranteed fully-visible placement in portrait 9:16 or landscape scenes. Moderator-only !meme and global 10-second cooldown are unchanged. Use TikFinity Desktop and TikTok LIVE Studio Display Capture. Unsigned Windows portable EXE."
             if ($LASTEXITCODE -ne 0) { exit 1 }
           }
           gh release upload $tag dist/Meme-Buddies-Windows.exe --repo $env:GITHUB_REPOSITORY --clobber

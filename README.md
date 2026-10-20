@@ -1,6 +1,13 @@
-# Meme Buddies — Mod Mode (v0.6.0)
+# Meme Buddies — Mod Mode (v0.6.1)
 
 A Windows desktop overlay for TikTok LIVE Studio: your **active TikTok moderators** become wandering profile-picture pets, and moderators can type **`!meme`** to trigger a **Desktop Goose-inspired prank**.
+
+## Fixed in v0.6.1: meme dragging
+
+- The meme window is now sized and **placed independently** inside a portrait-aware safe area. The entire PNG window remains visible once it's delivered and while it sits on the scene, including in narrow 9:16 layouts.
+- Smoothly animated off-screen retrieval, return with a tether, slight wobble, soft landing, and a clean escape. The popup looks like a small desktop window and stays fully in-frame for **2.5 seconds** before a gentle fade.
+- The character deliberately goes offscreen to retrieve the meme; the **dropped meme never gets dragged out of the scene**. Resizing the scene recalculates the delivery location.
+- This does not change moderator-only access, the `!meme` chat command, the global **10-second cooldown**, TikFinity connectivity or the PNG folder.
 
 ## Key features
 

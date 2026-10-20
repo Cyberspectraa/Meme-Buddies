@@ -104,6 +104,7 @@ async function body(req) {
 const pages = {
   '/': ['control.html', 'text/html; charset=utf-8'],
   '/overlay': ['overlay.html', 'text/html; charset=utf-8'],
+  '/drag-geometry.js': ['drag-geometry.js', 'application/javascript; charset=utf-8'],
   '/control.js': ['control.js', 'application/javascript; charset=utf-8'],
   '/overlay.js': ['overlay.js', 'application/javascript; charset=utf-8'],
   '/style.css': ['style.css', 'text/css; charset=utf-8']
