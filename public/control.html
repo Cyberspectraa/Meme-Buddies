@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meme Buddies • Control Room</title>
+<style>
+:root{font-family:Inter,system-ui,Segoe UI,sans-serif;color:#f3f2fb}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 3% 1%,#34245c,transparent 34%),#0f111c}
+main{max-width:1100px;margin:auto;padding:34px 20px}header{display:flex;align-items:center;gap:16px;margin-bottom:30px}
+.logo{width:64px;height:64px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(140deg,#ed4caa,#7661fa);font-weight:900;font-size:23px;box-shadow:0 10px 30px #8054ff44}
+h1{font-size:30px;margin:0}header p,.muted{color:#aaa7c1;font-size:14px;line-height:1.55;margin:5px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.card{background:#1c1c2c;border:1px solid #36344e;border-radius:18px;padding:22px;box-shadow:0 8px 20px #0002}
+h2{margin:0 0 10px;font-size:19px}label{display:block;font-size:13px;font-weight:700;color:#c9c3dc;margin:18px 0 8px}
+.line{display:flex;gap:9px;align-items:stretch}input,select{flex:1;min-width:0;background:#10101e;border:1px solid #4a4660;color:white;border-radius:10px;padding:11px;font:inherit;font-size:14px}
+input[type=number]{max-width:102px}button{background:#8063f3;color:white;border:0;border-radius:10px;padding:11px 14px;font-weight:750;cursor:pointer;white-space:nowrap}button.alt{background:#383150;color:#e7dfff}button.warn{background:#4d293e;color:#ffc3d5;margin-top:14px}button:hover{filter:brightness(1.12)}
+.status{color:#bfb3fe;background:#342c53;border:1px solid #61508b;padding:5px 10px;border-radius:99px;display:inline-block;font-size:12px;font-weight:800}
+a{color:#c5b3ff;font-size:14px;display:inline-block;margin-top:14px}ol{padding:0;list-style:none;min-height:140px}li.person{padding:11px 13px;background:#29263d;margin:7px 0;border-radius:10px;display:flex;gap:12px;align-items:center}li.person span:nth-child(2){flex:1;overflow-wrap:anywhere}
+code{color:#f4d9ff;background:#38294c;padding:3px 7px;border-radius:5px}
+.rules{font-size:13px;line-height:1.7;color:#a9a4c0}.bottom{border-top:1px solid #38364b;margin-top:18px;padding-top:17px;display:flex;justify-content:space-between}
+#feedback{min-height:20px;color:#f5b7dc;font-size:13px}#files{font-size:13px;color:#bfbad0;line-height:1.8}
+@media(max-width:750px){.grid{grid-template-columns:1fr}header{align-items:start}main{padding:24px 12px}.card{padding:17px}.line{flex-wrap:wrap}}
+</style></head>
+<body><main><header><div class="logo">MB</div><div><h1>Meme Buddies</h1><p>Top 3 TikTok gifters. Mischievous profile-picture pets.</p></div></header>
+<div class="grid">
+<section class="card"><h2>Live connection <span id="status" class="status">Idle</span></h2><p class="muted" id="message">Test mode ready</p>
+<form id="connect"><label>TikTok username (your account)</label><div class="line"><input id="handle" required placeholder="yourusername"><button>Connect</button></div></form>
+<button class="alt" id="disconnect" style="margin-top:12px">Disconnect</button>
+<hr style="border:0;border-top:1px solid #3a364c;margin:22px 0">
+<h2>LIVE Studio link</h2><p class="muted">Add this URL as a full-screen Link/Browser source in TikTok LIVE Studio with a transparent background.</p>
+<div class="line"><input id="url" readonly><button class="alt" id="copy">Copy</button></div>
+<a href="/overlay" target="_blank" rel="noopener">Open overlay preview ↗</a></section>
+<section class="card"><h2>Top 3 gifters</h2><p class="muted">Ranked by diamonds detected since connect/reset.</p>
+<ol id="top"><li class="muted">No gifts yet</li></ol>
+<p class="rules">Only these 3 viewers can type <code>!meme</code> to drag a random PNG.</p>
+<div class="bottom"><span>Global cooldown: 2 minutes</span><strong id="cooldown">Ready</strong></div></section>
+<section class="card"><h2>Test without going live</h2><p class="muted">Test locally before the show; test gifts will affect the overlay until you reset.</p>
+<form id="gift"><label>Simulate a supporter sending a gift</label><div class="line"><input id="testUser" required value="goose_lover" placeholder="Viewer username"><input id="diamonds" type="number" min="1" max="100000" value="25"><button>Test gift</button></div></form>
+<form id="meme"><label>Simulate a current top-3 person typing !meme</label><div class="line"><select id="memeUser"><option value="">Add a test gifter first</option></select><button>Test !meme</button></div></form>
+<button id="reset" class="warn">Reset leaderboard + cooldown</button><p id="feedback" role="status"></p></section>
+<section class="card"><h2>PNG meme library <span id="count" class="status">0 files</span></h2>
+<p class="muted">Add PNG images directly to the folder <code>memes/</code> next to server.js, then type !meme on live.</p>
+<ul id="files"><li>No PNGs yet</li></ul>
+<p class="rules">No automatic meme drops. Every accepted command picks a random PNG from this folder. Profile pictures still wander automatically. Files added to the folder are picked up on the next command.</p></section></div>
+<p class="muted" style="margin-top:24px;text-align:center">Local-only control panel • Keep this window's server running while live • Unofficial TikTok integration</p></main>
+<script>
+const $ = id => document.getElementById(id);
+let current = null;
+$('url').value = location.origin + '/overlay';
+async function post(action, data={}) {
+ try {
+  const response = await fetch('/api/' + action,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});
+  const result = await response.json();
+  if(!response.ok) throw new Error(result.error || 'Request failed');
+  $('feedback').textContent = action + ' succeeded';
+  return result;
+ } catch(error) { $('feedback').textContent = error.message; return null; }
+}
+function render(data) {
+ const previous = $('memeUser').value;
+ current = data;
+ $('status').textContent = data.mode.toUpperCase();
+ $('message').textContent = data.message;
+ $('count').textContent = data.memes.length + ' PNG(s)';
+ $('files').replaceChildren(...(data.memes.length ? data.memes : ['No PNGs yet']).map(name => {
+  const li=document.createElement('li'); li.textContent=name; return li;
+ }));
+ $('top').replaceChildren(...(data.top3.length ? data.top3 : [null]).map(p => {
+  const li=document.createElement('li'); li.className=p?'person':'muted';
+  if(!p){li.textContent='No gifters yet';return li;}
+  const rank=document.createElement('strong');rank.textContent='#'+p.rank;
+  const name=document.createElement('span');name.textContent='@'+p.username;
+  const score=document.createElement('strong');score.textContent=p.diamonds+' 💎';
+  li.append(rank,name,score);return li;
+ }));
+ $('memeUser').replaceChildren(...data.top3.map(p=>{
+   const o=document.createElement('option');o.value=p.username;o.textContent='@'+p.username;return o;
+ }));
+ if(data.top3.some(p=>p.username===previous)) $('memeUser').value=previous;
+ updateClock();
+}
+function updateClock() {
+ if(!current) return;
+ const sec=Math.max(0,Math.ceil((current.cooldownUntil-Date.now())/1000));
+ $('cooldown').textContent=sec ? Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0') : 'Ready';
+}
+$('connect').addEventListener('submit',async e=>{e.preventDefault();await post('connect',{username:$('handle').value});});
+$('disconnect').onclick=()=>post('disconnect');
+$('reset').onclick=()=>post('reset');
+$('gift').addEventListener('submit',async e=>{e.preventDefault();await post('test/gift',{username:$('testUser').value,diamonds:Number($('diamonds').value)});});
+$('meme').addEventListener('submit',async e=>{e.preventDefault();await post('test/chat',{username:$('memeUser').value});});
+$('copy').onclick=async()=>{await navigator.clipboard.writeText($('url').value);$('feedback').textContent='Overlay link copied';};
+fetch('/api/state').then(r=>r.json()).then(render);
+const sse=new EventSource('/events');
+sse.onmessage=e=>{const p=JSON.parse(e.data);if(p.type==='state')render(p.state);};
+setInterval(updateClock,250);
+</script></body></html>

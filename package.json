@@ -1,0 +1,13 @@
+{
+  "name": "meme-buddies",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Top three TikTok gifters as chaotic PFP overlay buddies for LIVE Studio",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": { "tiktok-live-connector": "2.4.0" }
+}
