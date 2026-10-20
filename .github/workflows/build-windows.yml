@@ -18,6 +18,10 @@ jobs:
         run: |
           npm install
           npm test
+      - name: Validate desktop scripts
+        run: |
+          node --check desktop/main.cjs
+          node --check desktop/preload.cjs
       - name: Build unsigned portable EXE
         run: npm run build:win
         env:
@@ -33,10 +37,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "v0.3.0"
+          $tag = "v0.4.0"
           gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Meme Buddies v0.3.0" --notes "Portable Windows x64 app for TikTok LIVE Studio using TikFinity Desktop's local Event API instead of EulerStream. Start TikFinity Desktop, connect your LIVE, then click Connect to TikFinity in Meme Buddies. Put PNGs next to the EXE in the memes folder. Top-three gifters can trigger !meme with a shared 2-minute cooldown. Unsigned; Windows may warn."
+            gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Meme Buddies v0.4.0" --notes "Portable Windows x64 app with a new optional transparent, click-through desktop overlay. Use Show buddies in the app and capture the same monitor with TikTok LIVE Studio Display Capture; no localhost Link Source required. Connect to TikFinity Desktop for live gifts and chat. Put PNGs in the memes folder next to the EXE. !meme for top-three gifters retains its shared two-minute cooldown. Unsigned; Windows may warn."
             if ($LASTEXITCODE -ne 0) { exit 1 }
           }
           gh release upload $tag dist/Meme-Buddies-Windows.exe --repo $env:GITHUB_REPOSITORY --clobber

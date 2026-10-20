@@ -24,9 +24,17 @@ code{color:#f4d9ff;background:#38294c;padding:3px 7px;border-radius:5px}
 <form id="connect"><button style="margin-top:16px">Connect to TikFinity</button></form>
 <button class="alt" id="disconnect" style="margin-top:12px">Disconnect</button>
 <hr style="border:0;border-top:1px solid #3a364c;margin:22px 0">
-<h2>LIVE Studio link</h2><p class="muted">Add this URL as a full-screen Link/Browser source in TikTok LIVE Studio with a transparent background.</p>
+<h2>Optional browser link</h2><p class="muted">Only use this if your LIVE Studio version accepts local HTTP browser sources. Otherwise use Desktop Overlay below.</p>
 <div class="line"><input id="url" readonly><button class="alt" id="copy">Copy</button></div>
 <a href="/overlay" target="_blank" rel="noopener">Open overlay preview ↗</a></section>
+<section class="card">
+<h2>Desktop overlay <span class="status" id="desktopState">OFF</span></h2>
+<p class="muted">Recommended for TikTok LIVE Studio when the Link/Browser source rejects localhost. Draw the buddies directly on one of your monitors, without entering any URL.</p>
+<label for="desktopDisplay">Choose monitor to capture</label>
+<div class="line"><select id="desktopDisplay"><option value="">Checking displays...</option></select><button id="toggleDesktop" type="button">Show buddies</button></div>
+<p id="desktopMessage" class="muted" style="margin-top:11px">The overlay is hidden until you enable it.</p>
+<p class="rules"><strong>LIVE Studio setup:</strong> Add source → <strong>Display Capture</strong> → select the same monitor. The transparent buddies will appear above your desktop. <strong>Game Capture</strong> or <strong>Window Capture</strong> won't reliably include a separate desktop overlay. Test the LIVE Studio preview before streaming.</p>
+</section>
 <section class="card"><h2>Top 3 gifters</h2><p class="muted">Ranked by gifts received while Meme Buddies is running (or since Reset). Reconnecting preserves the ranking.</p>
 <ol id="top"><li class="muted">No gifts yet</li></ol>
 <p class="rules">Only these 3 viewers can type <code>!meme</code> to drag a random PNG.</p>
@@ -82,6 +90,49 @@ function updateClock() {
  const sec=Math.max(0,Math.ceil((current.cooldownUntil-Date.now())/1000));
  $('cooldown').textContent=sec ? Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0') : 'Ready';
 }
+// Desktop overlay can be shown directly on a captured monitor; the old URL remains optional.
+let desktopVisible=false;
+function renderDesktop(state){
+ desktopVisible=!!state.visible;
+ $('desktopState').textContent=desktopVisible?'ON':'OFF';
+ $('toggleDesktop').textContent=desktopVisible?'Hide buddies':'Show buddies';
+ const previous=$('desktopDisplay').value;
+ $('desktopDisplay').replaceChildren(...state.displays.map(d=>{
+  const o=document.createElement('option');o.value=d.id;o.textContent=d.label;return o;
+ }));
+ const valid=state.displays.some(d=>d.id===previous);
+ $('desktopDisplay').value=valid?previous:state.displayId;
+ $('desktopMessage').textContent=desktopVisible
+  ?'Buddies are visible on this monitor. In LIVE Studio, use Display Capture to show them on stream.'
+  :'Desktop buddies are hidden. This does not stop the TikFinity connection.';
+}
+(async()=>{
+ if(!window.memeDesktop?.getOverlayState){
+  $('desktopState').textContent='EXE ONLY';
+  $('desktopDisplay').disabled=true;
+  $('toggleDesktop').disabled=true;
+  $('desktopMessage').textContent='This button is available when you open the Meme Buddies Windows EXE.';
+  return;
+ }
+ try{renderDesktop(await window.memeDesktop.getOverlayState());}
+ catch(error){$('desktopMessage').textContent='Could not read desktop state: '+error.message;}
+})();
+$('toggleDesktop').onclick=async()=>{
+ if(!window.memeDesktop)return;
+ const button=$('toggleDesktop');
+ button.disabled=true;
+ try{
+  const state=await window.memeDesktop.setOverlayVisible(!desktopVisible,$('desktopDisplay').value);
+  renderDesktop(state);
+  $('feedback').textContent=state.visible?'Desktop overlay shown':'Desktop overlay hidden';
+ }catch(error){$('desktopMessage').textContent='Desktop overlay error: '+error.message;}
+ finally{button.disabled=false;}
+};
+$('desktopDisplay').onchange=async()=>{
+ if(!window.memeDesktop)return;
+ try{renderDesktop(await window.memeDesktop.setOverlayVisible(desktopVisible,$('desktopDisplay').value));}
+ catch(error){$('desktopMessage').textContent='Could not change display: '+error.message;}
+};
 $('connect').addEventListener('submit',async e=>{e.preventDefault();await post('connect');});
 $('disconnect').onclick=()=>post('disconnect');
 $('reset').onclick=()=>post('reset');

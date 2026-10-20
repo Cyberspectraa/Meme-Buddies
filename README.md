@@ -1,62 +1,74 @@
 # Meme Buddies
 
-A Windows desktop app and local transparent overlay for **TikTok LIVE Studio**. The **top 3 gifters** become roaming TikTok profile-picture buddies. A current top-three supporter can type **`!meme`** in chat to make their buddy drag one random image from the `memes` PNG folder.
+Meme Buddies shows the **top 3 TikTok LIVE gifters** as animated TikTok profile-picture pets. They normally wander at the bottom of your screen and occasionally explore the screen. A **current top-three supporter** can type `!meme` to make their pet drag one random PNG from your `memes/` folder. The command has a **global two-minute cooldown**; there are **no random meme triggers**.
 
-## Fixed in v0.3.0: TikFinity instead of EulerStream
+## Windows portable EXE — v0.4.0
 
-The previous direct TikTok connector attempted to use an EulerStream signing endpoint restricted to a paid Business plan. **That dependency is removed.** Meme Buddies now consumes gift and chat events from the **TikFinity Desktop Event API**, exposed at `ws://127.0.0.1:21213/` on the **same PC**. It does not need an EulerStream API key.
+Download the newest `Meme-Buddies-Windows.exe` from **[GitHub Releases](https://github.com/Cyberspectraa/Meme-Buddies/releases)**. It's a portable Windows x64 program, not an installer. Move it into a folder you control and double-click to start. It doesn't need Node.js or terminal commands.
 
-You **must install/run TikFinity Desktop**, connect it to your LIVE, and keep it running. TikFinity is a separate app and its service can have its own account or feature requirements. TikFinity's documented local WebSocket supports `gift` and `chat` events.
+### TikTok LIVE Studio: Desktop overlay (recommended)
 
-## Get started: portable Windows EXE (no Node.js required)
+If LIVE Studio rejects the `http://127.0.0.1:3927/overlay` Link source, **don't use the link at all**.
 
-1. Download the latest **Meme-Buddies-Windows.exe** from [GitHub Releases](https://github.com/Cyberspectraa/Meme-Buddies/releases).
-2. Put the EXE in a folder you control, such as `Documents/Meme Buddies`. Double-click it.
-3. Install and open [TikFinity Desktop](https://tikfinity.com/). Sign in and connect **TikFinity** to your TikTok LIVE stream.
-4. In Meme Buddies, click **Connect to TikFinity**. The status should change to **CONNECTED** once the desktop Event API responds. This only proves the local API is reachable; gifts appear when the LIVE is active and TikFinity is connected to it.
-5. Click **Open memes folder** and place any PNG memes in there. The folder lives next to the portable EXE. Add/remove PNGs at any time.
-6. In **TikTok LIVE Studio**, add a full-screen **Link/Browser** source at **`http://127.0.0.1:3927/overlay`**. Make its dimensions match the stream canvas, and layer it above your game or screen.
-7. Test with **Test gift** and **Test !meme** first. Reset the leaderboard and cooldown before your real LIVE.
+1. Launch Meme Buddies v0.4.0.
+2. In the dashboard's **Desktop overlay** card, choose the monitor you will show on stream.
+3. Click **Show buddies**. The app displays a borderless, transparent, always-on-top, **mouse-click-through** scene over that monitor. The app won't block mouse clicks or actually manipulate files and windows.
+4. In **TikTok LIVE Studio**, select **Add source → Display Capture** (may be called screen capture) and choose the **same monitor**.
+5. Test with **Test gift** using three different usernames in Meme Buddies. The PFP characters should become visible on your actual display and in LIVE Studio's preview. Add a PNG to the `memes/` folder and use **Test !meme** to check the drag animation.
+6. Minimize your control panel and keep Meme Buddies running while live. Click **Hide buddies** to hide them.
 
-Keep both Meme Buddies and TikFinity Desktop running. If TikFinity starts late or briefly disconnects, Meme Buddies will automatically retry every four seconds. It keeps the leaderboard and cooldown across a temporary reconnect.
+**Important trade-off:** Display Capture shares the entire selected monitor, including your open windows and notifications. If you were previously using Game Capture or Window Capture exclusively, this method requires switching to Display Capture, because separately drawn desktop pets usually aren't included in captures of an individual app. Test first; some fullscreen games and capture configurations may behave differently. A borderless/windowed game is often more predictable. If capturing the same monitor as LIVE Studio, avoid placing LIVE Studio within its own captured view (recursive mirror effect). Prefer a separate monitor if available.
 
-This EXE is portable and currently unsigned, so Windows may show a SmartScreen warning. Download it only from the project release.
+### Alternate: browser/link overlay
 
-## Controls & rules
+For versions of LIVE Studio that support local browser sources, the original transparent URL is still available:
 
-- At most **3** PFP buddies are shown, ranked by diamonds **observed after the app starts receiving gift events** (not a historical leaderboard).
-- They normally roam along the bottom and occasionally explore elsewhere.
-- There are **no automatic meme events**. Only a viewer who is *currently in the top 3* can trigger a meme by sending an exact `!meme` chat message.
-- A successful command makes their buddy drag a random local PNG around the stream overlay.
-- There is **one global 120-second cooldown across all 3 buddies**. Failed commands and non-top-three viewers do not consume it.
-- Gift streak progress is ignored until the final event, avoiding repeat-count double counting for giftType 1.
-- The chaos is drawn within the TikTok LIVE Studio overlay; Meme Buddies does not manipulate actual desktop windows or files.
+```
+http://127.0.0.1:3927/overlay
+```
 
-## Developer / source mode
+Some setups reject local `http://` links or require `https://`, so **use the desktop overlay option above if the URL won't add**. No public tunnel is necessary for desktop capture.
 
-With Node.js 22 or newer:
+## TikFinity connection (no EulerStream subscription)
+
+Meme Buddies receives gift and chat events from **TikFinity Desktop's local Event API** on `ws://127.0.0.1:21213/`. The old EulerStream signing dependency is removed.
+
+1. Open [TikFinity Desktop](https://tikfinity.com/) on the **same PC**, and connect it to your TikTok LIVE.
+2. Open Meme Buddies and click **Connect to TikFinity**. If TikFinity is not ready, Meme Buddies automatically retries connecting.
+3. When live, gifts update the ranking and current top-three users can type `!meme`.
+4. Keep **both programs** open for your whole stream.
+
+The **CONNECTED** status confirms that TikFinity's *local* WebSocket API is reachable; it doesn't by itself prove that TikFinity is linked to your active TikTok LIVE. Test using actual gift/chat events during a LIVE.
+
+## Memes and rules
+
+- Click **Open memes folder** in Meme Buddies and drop any **PNG** images in that folder. New PNGs are detected without restart.
+- Only the current top 3 supporters have buddies or may use `!meme`.
+- Ranking is based on gifts observed since the app started or was reset; it is **not** the historical TikTok leaderboard.
+- One successful `!meme` means **one random PNG drag** and starts a shared **120-second cooldown** for all three viewers.
+- Invalid commands, viewers outside the top 3, or an empty folder do not use the cooldown.
+- GIF/JPEG files are not supported in the memes folder.
+- The pets and meme props are *visual only*; the app doesn't modify desktop objects.
+
+## Development
+
+With Node.js 22+:
 
 ```bash
 npm install
 npm start
 ```
 
-Open **http://127.0.0.1:3927/** for the control room, and **http://127.0.0.1:3927/overlay** for the transparent stream overlay.
-
-For Electron development, run `npm run desktop`. To build Windows x64 portable: `npm run build:win` on Windows. GitHub Actions automatically builds and publishes the portable Windows release.
-
-Run `npm test` to check gift rankings, meme cooldown, TikFinity WebSocket gift/chat forwarding and reconnect behaviour.
+Use `npm run desktop` for the desktop app, or `npm run build:win` to build the portable Windows executable from a Windows PC. Run `npm test` for ranking, cooldown, TikFinity event, and reconnect tests. The GitHub Windows build also performs syntax checking.
 
 ## Troubleshooting
 
-**Meme Buddies says WAITING:** TikFinity Desktop is not serving its local Event API. Open TikFinity Desktop on the same PC, sign in, connect your TikTok account/stream, and make sure its Event API is available. Meme Buddies will automatically retry.
+- **LIVE Studio rejects local URL:** use **Desktop overlay → Show buddies** and **Display Capture**, not a Link source.
+- **Buddies visible on desktop but not LIVE:** confirm you're capturing the **same monitor** and using **Display Capture**, not Game Capture or Window Capture. Check the preview and try running the game borderless.
+- **Nothing shown:** use **Test gift** to create the top-three supporters. Without a gifter, there are no avatars. Test after choosing the monitor and enabling desktop overlay.
+- **TikFinity status says WAITING:** start TikFinity Desktop on the same PC and allow its local Event API; Meme Buddies retries automatically.
+- **TikFinity says CONNECTED but gifts don't appear:** verify TikFinity is actively linked to your running LIVE. The local connection alone isn't proof of TikTok connectivity.
+- **`!meme` doesn't work:** put at least one PNG in `memes`, ensure the sender is in the current top three, and check the two-minute cooldown.
+- **Old EulerStream Business plan error:** download **v0.3.0 or newer** (v0.4.0 is recommended); old 0.2.x builds still used that signing service.
 
-**CONNECTED but there are no buddies:** The local WebSocket is up but that doesn't guarantee TikFinity has joined an active LIVE. Start your LIVE, connect TikFinity, and send a small real gift for testing. Test gifts also work offline.
-
-**`!meme` does nothing:** The sender must already be one of the top 3 gifters; place at least one PNG in `memes/`; check the two-minute cooldown. Test the command from the dashboard.
-
-**TikTok LIVE Studio shows nothing:** Add the *overlay URL*, not the control page; make the source full-canvas, on top of your other sources, and keep Meme Buddies running.
-
-**EulerStream Business plan error still appears:** You're running an older release. Install v0.3.0 or later; the new build no longer imports `tiktok-live-connector`.
-
-**Connection limitations:** TikFinity's Event API is provided by TikFinity, not by Meme Buddies. TikTok or TikFinity updates may affect the connection or the profile-picture data.
+The EXE is currently unsigned and Windows may display a SmartScreen warning. Download it only from this repository. TikFinity and TikTok updates can affect profile-photo and event data.
