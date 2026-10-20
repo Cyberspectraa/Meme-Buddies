@@ -1,156 +1,171 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meme Buddies • Control Room</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meme Buddies — Mod Mode</title>
 <style>
-:root{font-family:Inter,system-ui,Segoe UI,sans-serif;color:#f3f2fb}*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:radial-gradient(circle at 3% 1%,#34245c,transparent 34%),#0f111c}
-main{max-width:1100px;margin:auto;padding:34px 20px}header{display:flex;align-items:center;gap:16px;margin-bottom:30px}
-.logo{width:64px;height:64px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(140deg,#ed4caa,#7661fa);font-weight:900;font-size:23px;box-shadow:0 10px 30px #8054ff44}
-h1{font-size:30px;margin:0}header p,.muted{color:#aaa7c1;font-size:14px;line-height:1.55;margin:5px 0}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.card{background:#1c1c2c;border:1px solid #36344e;border-radius:18px;padding:22px;box-shadow:0 8px 20px #0002}
-h2{margin:0 0 10px;font-size:19px}label{display:block;font-size:13px;font-weight:700;color:#c9c3dc;margin:18px 0 8px}
-.line{display:flex;gap:9px;align-items:stretch}input,select{flex:1;min-width:0;background:#10101e;border:1px solid #4a4660;color:white;border-radius:10px;padding:11px;font:inherit;font-size:14px}
-input[type=number]{max-width:102px}button{background:#8063f3;color:white;border:0;border-radius:10px;padding:11px 14px;font-weight:750;cursor:pointer;white-space:nowrap}button.alt{background:#383150;color:#e7dfff}button.warn{background:#4d293e;color:#ffc3d5;margin-top:14px}button:hover{filter:brightness(1.12)}
-.status{color:#bfb3fe;background:#342c53;border:1px solid #61508b;padding:5px 10px;border-radius:99px;display:inline-block;font-size:12px;font-weight:800}
-a{color:#c5b3ff;font-size:14px;display:inline-block;margin-top:14px}ol{padding:0;list-style:none;min-height:140px}li.person{padding:11px 13px;background:#29263d;margin:7px 0;border-radius:10px;display:flex;gap:12px;align-items:center}li.person span:nth-child(2){flex:1;overflow-wrap:anywhere}
-code{color:#f4d9ff;background:#38294c;padding:3px 7px;border-radius:5px}
-.rules{font-size:13px;line-height:1.7;color:#a9a4c0}.bottom{border-top:1px solid #38364b;margin-top:18px;padding-top:17px;display:flex;justify-content:space-between}
-#feedback{min-height:20px;color:#f5b7dc;font-size:13px}#files{font-size:13px;color:#bfbad0;line-height:1.8}
-@media(max-width:750px){.grid{grid-template-columns:1fr}header{align-items:start}main{padding:24px 12px}.card{padding:17px}.line{flex-wrap:wrap}}
+:root{font-family:Inter,system-ui,"Segoe UI",sans-serif;color:#f4f2ff}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 3% 1%,#332154,transparent 34%),#10111d}
+main{max-width:1100px;margin:auto;padding:30px 20px}
+header{display:flex;gap:16px;align-items:center;margin-bottom:26px}
+.logo{display:grid;place-items:center;width:65px;height:65px;border-radius:18px;font-size:25px;font-weight:900;background:linear-gradient(130deg,#e947b4,#7964ed)}
+h1{font-size:28px;margin:0}header p,.muted{font-size:13px;line-height:1.6;color:#aca8c3;margin:4px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.card{background:#1d1b2d;border:1px solid #35314b;border-radius:19px;padding:23px;min-width:0}
+h2{margin:0 0 12px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.status{font-size:11px;background:#342d55;padding:6px 11px;border-radius:99px;color:#d8c5ff;border:1px solid #51456e}
+label{display:block;font-size:13px;color:#d2c9ee;font-weight:700;margin:16px 0 8px}
+.row{display:flex;gap:8px;align-items:stretch}
+input,select,textarea{background:#11111e;border:1px solid #4a425f;color:#f1e9ff;padding:11px 12px;border-radius:10px;font:inherit;font-size:14px;min-width:0;flex:1}
+textarea{resize:vertical;min-height:100px;width:100%}
+button{background:linear-gradient(120deg,#bb49ad,#7862eb);color:#fff;border:0;border-radius:10px;padding:11px 15px;font:inherit;font-size:13px;font-weight:800;white-space:nowrap;cursor:pointer}
+button.alt{background:#3b3259}button.warn{background:#4b2941;color:#ffd4e5}
+button:disabled{opacity:.55;cursor:default}button:hover{filter:brightness(1.1)}
+ol{padding:0;list-style:none;min-height:100px}li.person{background:#2c2743;padding:12px;border-radius:11px;margin:6px 0;display:flex;align-items:center;gap:10px}
+.pill{font-size:11px;border-radius:7px;color:#ffe8ba;background:#51402f;padding:4px 7px}
+.person .name{flex:1;overflow-wrap:anywhere}code{background:#342a49;color:#f1d5ff;padding:3px 6px;border-radius:5px}
+.note{color:#a9a0c1;font-size:13px;line-height:1.6}.bottom{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #39334d;margin-top:16px;padding-top:15px}
+#feedback{font-size:13px;color:#f4c5e1;min-height:20px}
+#files{color:#b9b1cd;font-size:13px;max-height:170px;overflow:auto}
+a{color:#cdb9ff}footer{text-align:center;color:#827b9a;font-size:12px;margin-top:25px}
+@media(max-width:770px){.grid{grid-template-columns:1fr}main{padding:20px 12px}.card{padding:17px}.row{flex-wrap:wrap}}
 </style></head>
-<body><main><header><div class="logo">MB</div><div><h1>Meme Buddies</h1><p>Top 3 active TikTok viewers. Mischievous profile-picture pets.</p></div></header>
+<body><main>
+<header><div class="logo">MB</div><div><h1>Meme Buddies — Mod Mode</h1><p>Moderator profile pictures, mischievous desktop pets, and Goose-style meme dragging</p></div></header>
 <div class="grid">
-<section class="card"><h2>Live connection <span id="status" class="status">Idle</span></h2><p class="muted" id="message">Test mode ready</p>
-<p class="muted" style="margin-top:14px">1. Open <a href="https://tikfinity.com/" target="_blank" rel="noopener" style="margin:0">TikFinity Desktop</a> on this PC and connect it to your TikTok LIVE.<br>2. Click below to connect Meme Buddies to TikFinity's local Event API.<br>3. Keep both apps running during the stream.</p>
-<form id="connect"><button style="margin-top:16px">Connect to TikFinity</button></form>
-<button class="alt" id="disconnect" style="margin-top:12px">Disconnect</button>
-<hr style="border:0;border-top:1px solid #3a364c;margin:22px 0">
-<h2>Optional browser link</h2><p class="muted">Only use this if your LIVE Studio version accepts local HTTP browser sources. Otherwise use Desktop Overlay below.</p>
-<div class="line"><input id="url" readonly><button class="alt" id="copy">Copy</button></div>
-<a href="/overlay" target="_blank" rel="noopener">Open overlay preview ↗</a></section>
-<section class="card">
-<h2>Portrait LIVE overlay <span class="status" id="desktopState">OFF</span></h2>
-<p class="muted">Designed for regular vertical TikTok LIVE. The default is a centred 9:16 transparent strip on your monitor instead of a gaming-style widescreen overlay.</p>
-<label for="desktopDisplay">Choose monitor to capture</label>
-<div class="line"><select id="desktopDisplay"><option value="">Checking displays...</option></select><button id="toggleDesktop" type="button">Show buddies</button></div>
-<label for="desktopLayout">Stage shape</label><select id="desktopLayout"><option value="portrait">Portrait 9:16 (recommended)</option><option value="full">Whole monitor (gaming layout)</option></select>
-<p id="desktopMessage" class="muted" style="margin-top:11px">The overlay is hidden until you enable it.</p>
-<p class="rules"><strong>LIVE Studio setup:</strong> Select a 9:16 Portrait scene and <strong>Display Capture</strong> the same monitor. Crop to the <strong>central portrait strip</strong>. Preview using TikTok's <strong>General</strong> mobile view. This method captures your desktop too, including open windows, so hide anything private. Game/Window Capture may miss the separate buddies.</p>
+<section class="card"><h2>TikFinity connection <span id="status" class="status">IDLE</span></h2>
+<p id="message" class="muted">Test mode is ready.</p>
+<p class="note">Open <a href="https://tikfinity.com/" target="_blank" rel="noopener">TikFinity Desktop</a>, connect your TikTok LIVE, then click Connect. Only moderators will appear.</p>
+<div class="row" style="margin-top:13px"><button id="connect">Connect to TikFinity</button><button id="disconnect" class="alt">Disconnect</button></div>
+<p class="note">If TikFinity is offline, Meme Buddies automatically retries its local Event API. No EulerStream subscription required.</p>
 </section>
-<section class="card"><h2>Top 3 active viewers</h2><p class="muted">Points for chat, likes, shares, follows, subscriptions and gifts. Our activity leaderboard—not an official TikTok viewer ranking. You can reset between lives.</p>
-<ol id="top"><li class="muted">No gifts yet</li></ol>
-<p class="rules">Only these 3 viewers can type <code>!meme</code> to drag a random PNG.</p>
-<div class="bottom"><span>Global cooldown: 2 minutes</span><strong id="cooldown">Ready</strong></div></section>
-<section class="card"><h2>Test without going live</h2><p class="muted">Test gifts and general activity locally. Simulated activity counts until reset.</p>
-<form id="gift"><label>Simulate a supporter sending a gift</label><div class="line"><input id="testUser" required value="goose_lover" placeholder="Viewer username"><input id="diamonds" type="number" min="1" max="100000" value="25"><button>Test gift</button></div></form>
-<form id="activity"><label>Simulate viewer activity</label><div class="line"><input id="activityUser" placeholder="viewer name" value="chatty_user" required><select id="activityType"><option value="chat">Comment</option><option value="like">10 likes</option><option value="share">Share</option><option value="follow">Follow</option><option value="member">Join</option><option value="subscribe">Subscribe</option></select><button>Test activity</button></div></form>
-<form id="meme"><label>Simulate a current top-3 person typing !meme</label><div class="line"><select id="memeUser"><option value="">Add a test gifter first</option></select><button>Test !meme</button></div></form>
-<button id="reset" class="warn">Reset leaderboard + cooldown</button><p id="feedback" role="status"></p></section>
-<section class="card"><h2>PNG meme library <span id="count" class="status">0 files</span></h2>
-<p class="muted">Add PNG images to the <code>memes</code> folder beside the portable EXE (or next to server.js when running source), then type !meme on live.</p>
-<button type="button" class="alt" id="openFolder" style="margin-top:12px">Open memes folder</button>
-<ul id="files"><li>No PNGs yet</li></ul>
-<p class="rules">No automatic meme drops. Every accepted chat command picks a random PNG from this folder. Profile pictures still wander automatically. Files added to the folder are picked up on the next command.</p></section></div>
-<p class="muted" style="margin-top:24px;text-align:center">Local-only control panel • TikFinity Desktop must run on this PC • No EulerStream key required</p></main>
+<section class="card"><h2>Active moderator buddies <span id="modCount" class="status">0</span></h2>
+<p class="muted">Mods appear when they interact in your live. Others never earn an avatar, even if they gift or like.</p>
+<ol id="mods"><li class="muted">No moderators spotted yet</li></ol>
+<div class="bottom"><span><code>!meme</code> shared cooldown</span><strong id="cooldown">Ready</strong></div>
+<p class="note">10 seconds across all mods. No automatic meme commands. Meme PNGs appear only after a mod types <code>!meme</code>.</p>
+</section>
+<section class="card"><h2>Moderator list</h2>
+<p class="muted">Automatic moderator detection uses TikFinity's role flags/badges. If any mod isn't identified, add their exact @username here. The list is saved to <code>mods.txt</code> beside the EXE.</p>
+<label for="manualMods">Manual moderator usernames (one per line)</label>
+<textarea id="manualMods" spellcheck="false" placeholder="yourmod1&#10;yourmod2"></textarea>
+<button id="saveMods" style="margin-top:11px">Save mod list</button>
+<p class="note">Adding a name allows that moderator to appear the next time they interact. It doesn't create a fake profile picture or grant TikTok moderator privileges.</p>
+</section>
+<section class="card"><h2>Test without going LIVE</h2>
+<p class="muted">Add pretend moderators, then test Goose-style dragging. Test results appear in the desktop overlay and reset when you press Reset.</p>
+<label for="testMod">Test moderator username</label>
+<div class="row"><input id="testMod" value="goose_mod" placeholder="mod username"><button id="testAdd">Add test mod</button></div>
+<label for="testMemeMod">Test the !meme command</label>
+<div class="row"><select id="testMemeMod"></select><button id="testMeme">Test !meme</button></div>
+<button id="reset" class="warn" style="margin-top:17px">Clear active mods + cooldown</button>
+<p id="feedback" role="status"></p>
+</section>
+<section class="card"><h2>Portrait desktop overlay <span id="desktopState" class="status">OFF</span></h2>
+<p class="muted">Use this when TikTok LIVE Studio doesn't accept localhost overlay links. A transparent, click-through layer appears on your selected monitor.</p>
+<label for="desktopDisplay">Monitor</label>
+<select id="desktopDisplay"></select>
+<label for="desktopLayout">Layout</label>
+<select id="desktopLayout"><option value="portrait">Portrait 9:16 (recommended)</option><option value="full">Full screen (desktop goose)</option></select>
+<button id="toggleDesktop" style="margin-top:14px">Show buddies</button>
+<p id="desktopMessage" class="note"></p>
+<p class="note">In TikTok LIVE Studio, use Display Capture of the same monitor; crop to the centred vertical strip for Portrait mode. This captures the desktop behind the buddies, too.</p>
+</section>
+<section class="card"><h2>PNG meme folder <span id="memeCount" class="status">0 PNGs</span></h2>
+<p class="muted">Drop your PNG memes in the <code>memes</code> folder beside the EXE. Every successful <code>!meme</code> selects one at random.</p>
+<button id="openFolder" class="alt" style="margin-top:12px">Open memes folder</button>
+<ul id="files"><li>Folder empty</li></ul>
+<p class="note">Goose-style action: mod runs off-screen, returns dragging a meme window, drops it, and scampers away. Other programs and files aren't touched.</p>
+<p class="note">Optional browser source (only if supported): <code>http://127.0.0.1:3927/overlay</code></p>
+</section>
+</div><footer>Mod Mode · TikFinity Desktop connection · Built for Windows and TikTok LIVE Studio</footer>
 <script>
-const $ = id => document.getElementById(id);
-let current = null;
-$('url').value = location.origin + '/overlay';
-async function post(action, data={}) {
- try {
-  const response = await fetch('/api/' + action,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});
-  const result = await response.json();
-  if(!response.ok) throw new Error(result.error || 'Request failed');
-  $('feedback').textContent = action + ' succeeded';
-  return result;
- } catch(error) { $('feedback').textContent = error.message; return null; }
-}
-function render(data) {
- const previous = $('memeUser').value;
- current = data;
- $('status').textContent = data.mode.toUpperCase();
- $('message').textContent = data.message;
- $('count').textContent = data.memes.length + ' PNG(s)';
- $('files').replaceChildren(...(data.memes.length ? data.memes : ['No PNGs yet']).map(name => {
-  const li=document.createElement('li'); li.textContent=name; return li;
- }));
- $('top').replaceChildren(...(data.top3.length ? data.top3 : [null]).map(p => {
-  const li=document.createElement('li'); li.className=p?'person':'muted';
-  if(!p){li.textContent='No gifters yet';return li;}
-  const rank=document.createElement('strong');rank.textContent='#'+p.rank;
-  const name=document.createElement('span');name.textContent='@'+p.username;
-  const score=document.createElement('strong');score.textContent=p.points+' pts';score.title=p.diamonds+' gift diamonds';
-  li.append(rank,name,score);return li;
- }));
- $('memeUser').replaceChildren(...data.top3.map(p=>{
-   const o=document.createElement('option');o.value=p.username;o.textContent='@'+p.username;return o;
- }));
- if(data.top3.some(p=>p.username===previous)) $('memeUser').value=previous;
- updateClock();
-}
-function updateClock() {
- if(!current) return;
- const sec=Math.max(0,Math.ceil((current.cooldownUntil-Date.now())/1000));
- $('cooldown').textContent=sec ? Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0') : 'Ready';
-}
-// Desktop overlay can be shown directly on a captured monitor; the old URL remains optional.
+const $=id=>document.getElementById(id);
+let state=null;
 let desktopVisible=false;
-function renderDesktop(state){
- desktopVisible=!!state.visible;
- $('desktopLayout').value=state.layout||'portrait';
+async function post(action,data={}){
+ try{
+  const response=await fetch('/api/'+action,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});
+  const result=await response.json();
+  if(!response.ok) throw new Error(result.error||'Request failed');
+  $('feedback').textContent='Updated successfully.';
+  return result;
+ }catch(error){$('feedback').textContent=error.message;return null;}
+}
+function render(payload){
+ const prev=$('testMemeMod').value;
+ state=payload;
+ $('status').textContent=payload.mode.toUpperCase();
+ $('message').textContent=payload.message;
+ $('modCount').textContent=String(payload.activeMods.length);
+ $('memeCount').textContent=payload.memes.length+' PNGs';
+ const focus=document.activeElement;
+ if(focus!==$('manualMods')) $('manualMods').value=payload.manualMods.join('\n');
+ $('mods').replaceChildren(...(payload.activeMods.length?payload.activeMods:[null]).map(p=>{
+  const li=document.createElement('li');
+  if(!p){li.className='muted';li.textContent='No moderators spotted yet';return li;}
+  li.className='person';
+  const name=document.createElement('strong');name.className='name';name.textContent='@'+p.username;
+  const badge=document.createElement('span');badge.className='pill';badge.textContent=p.manual?'MANUAL MOD':'MOD';
+  li.append(name,badge);return li;
+ }));
+ $('testMemeMod').replaceChildren(...payload.activeMods.map(p=>{
+  const opt=document.createElement('option');opt.value=p.username;opt.textContent='@'+p.username;return opt;
+ }));
+ if(payload.activeMods.some(p=>p.username===prev))$('testMemeMod').value=prev;
+ $('files').replaceChildren(...(payload.memes.length?payload.memes:['No PNGs added']).map(s=>{const li=document.createElement('li');li.textContent=s;return li;}));
+ updateCooldown();
+}
+function updateCooldown(){
+ if(!state)return;
+ const secs=Math.max(0,Math.ceil((state.cooldownUntil-Date.now())/1000));
+ $('cooldown').textContent=secs?secs+'s':'Ready';
+}
+function showDesktopState(d){
+ desktopVisible=!!d.visible;
  $('desktopState').textContent=desktopVisible?'ON':'OFF';
  $('toggleDesktop').textContent=desktopVisible?'Hide buddies':'Show buddies';
- const previous=$('desktopDisplay').value;
- $('desktopDisplay').replaceChildren(...state.displays.map(d=>{
-  const o=document.createElement('option');o.value=d.id;o.textContent=d.label;return o;
- }));
- const valid=state.displays.some(d=>d.id===previous);
- $('desktopDisplay').value=valid?previous:state.displayId;
- $('desktopMessage').textContent=desktopVisible
-  ?'Buddies are visible on this monitor. In LIVE Studio, use Display Capture to show them on stream.'
-  :'Desktop buddies are hidden. This does not stop the TikFinity connection.';
+ const prev=$('desktopDisplay').value;
+ $('desktopDisplay').replaceChildren(...d.displays.map(item=>{const o=document.createElement('option');o.value=item.id;o.textContent=item.label;return o;}));
+ $('desktopDisplay').value=d.displays.some(p=>p.id===prev)?prev:d.displayId;
+ $('desktopLayout').value=d.layout||'portrait';
+ $('desktopMessage').textContent=desktopVisible?'Buddies are visible on the selected monitor.':'The transparent desktop overlay is hidden.';
 }
-(async()=>{
- if(!window.memeDesktop?.getOverlayState){
+async function changeDesktop(visible){
+ const button=$('toggleDesktop');button.disabled=true;
+ try{
+  const d=await window.memeDesktop.setOverlayVisible(visible,$('desktopDisplay').value,$('desktopLayout').value);
+  showDesktopState(d);
+ }catch(error){$('desktopMessage').textContent=error.message;}
+ finally{button.disabled=false;}
+}
+async function setupDesktop(){
+ if(!window.memeDesktop){
   $('desktopState').textContent='EXE ONLY';
-  $('desktopDisplay').disabled=true;
   $('toggleDesktop').disabled=true;
-  $('desktopMessage').textContent='This button is available when you open the Meme Buddies Windows EXE.';
+  $('desktopDisplay').disabled=true;
+  $('desktopLayout').disabled=true;
+  $('desktopMessage').textContent='Open the Windows EXE to use the desktop overlay.';
   return;
  }
- try{renderDesktop(await window.memeDesktop.getOverlayState());}
- catch(error){$('desktopMessage').textContent='Could not read desktop state: '+error.message;}
-})();
-$('toggleDesktop').onclick=async()=>{
- if(!window.memeDesktop)return;
- const button=$('toggleDesktop');
- button.disabled=true;
- try{
-  const state=await window.memeDesktop.setOverlayVisible(!desktopVisible,$('desktopDisplay').value,$('desktopLayout').value);
-  renderDesktop(state);
-  $('feedback').textContent=state.visible?'Desktop overlay shown':'Desktop overlay hidden';
- }catch(error){$('desktopMessage').textContent='Desktop overlay error: '+error.message;}
- finally{button.disabled=false;}
-};
-$('desktopDisplay').onchange=async()=>{
- if(!window.memeDesktop)return;
- try{renderDesktop(await window.memeDesktop.setOverlayVisible(desktopVisible,$('desktopDisplay').value,$('desktopLayout').value));}
- catch(error){$('desktopMessage').textContent='Could not change display: '+error.message;}
-};
-$('desktopLayout').onchange=async()=>{
- if(!window.memeDesktop)return;
- try{renderDesktop(await window.memeDesktop.setOverlayVisible(desktopVisible,$('desktopDisplay').value,$('desktopLayout').value));}
- catch(error){$('desktopMessage').textContent='Could not change layout: '+error.message;}
-};
-$('connect').addEventListener('submit',async e=>{e.preventDefault();await post('connect');});
+ try{showDesktopState(await window.memeDesktop.getOverlayState());}
+ catch(e){$('desktopMessage').textContent=e.message;}
+}
+$('connect').onclick=()=>post('connect');
 $('disconnect').onclick=()=>post('disconnect');
+$('saveMods').onclick=()=>post('mods',{usernames:$('manualMods').value.split(/[\n,]+/).map(v=>v.trim()).filter(Boolean)});
+$('testAdd').onclick=()=>post('test/mod',{username:$('testMod').value});
+$('testMeme').onclick=()=>post('test/chat',{username:$('testMemeMod').value});
 $('reset').onclick=()=>post('reset');
-$('gift').addEventListener('submit',async e=>{e.preventDefault();await post('test/gift',{username:$('testUser').value,diamonds:Number($('diamonds').value)});});
-$('activity').addEventListener('submit',async e=>{e.preventDefault();await post('test/activity',{username:$('activityUser').value,type:$('activityType').value});});
-$('meme').addEventListener('submit',async e=>{e.preventDefault();await post('test/chat',{username:$('memeUser').value});});
-$('openFolder').onclick=async()=>{try{if(!window.memeDesktop)throw new Error('Open the portable desktop app to use this button');const result=await window.memeDesktop.openMemesFolder();if(result)throw new Error(result);$('feedback').textContent='Opened memes folder';}catch(e){$('feedback').textContent=e.message;}};
-$('copy').onclick=async()=>{await navigator.clipboard.writeText($('url').value);$('feedback').textContent='Overlay link copied';};
+$('toggleDesktop').onclick=()=>changeDesktop(!desktopVisible);
+$('desktopDisplay').onchange=()=>changeDesktop(desktopVisible);
+$('desktopLayout').onchange=()=>changeDesktop(desktopVisible);
+$('openFolder').onclick=async()=>{
+ if(!window.memeDesktop){$('feedback').textContent='Open the Windows EXE to access this folder.';return;}
+ try{const result=await window.memeDesktop.openMemesFolder();if(result)throw new Error(result);}
+ catch(e){$('feedback').textContent=e.message;}
+};
 fetch('/api/state').then(r=>r.json()).then(render);
-const sse=new EventSource('/events');
-sse.onmessage=e=>{const p=JSON.parse(e.data);if(p.type==='state')render(p.state);};
-setInterval(updateClock,250);
-</script></body></html>
+const events=new EventSource('/events');
+events.onmessage=e=>{try{const p=JSON.parse(e.data);if(p.type==='state')render(p.state);}catch(error){console.error(error);}};
+setInterval(updateCooldown,250);
+setupDesktop();
+</script></main></body></html>

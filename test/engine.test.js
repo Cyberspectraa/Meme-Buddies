@@ -1,65 +1,73 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MemeEngine } from '../src/engine.js';
+import { MemeEngine, isVerifiedModerator, normalizeUsername, COOLDOWN_MS } from '../src/engine.js';
+const event = (name, mod = true) => ({ user: {
+  userId: 'id:' + name.toLowerCase(), uniqueId: name,
+  profilePictureUrl: 'https://example.com/' + name + '.png', isModerator: mod
+}, comment: '!meme' });
 
-const gift = (userId, diamondCount, extra = {}) => ({
-  user: { userId, uniqueId: userId, profilePictureUrl: 'https://example.com/pfp.png' },
-  diamondCount, repeatCount: 1, ...extra
+test('only verified mods appear; gifts, likes and non-mod chat do not create pets', () => {
+  const e=new MemeEngine();
+  assert.equal(e.observe(event('modOne')),true);
+  assert.equal(e.observe(event('nonmod',false)),false);
+  assert.equal(e.activeMods().length,1);
+  assert.equal(e.activeMods()[0].username,'modone');
+  assert.equal(e.activeMods()[0].avatarUrl,'https://example.com/modOne.png');
 });
-const chat = (userId, comment = '!meme') => ({ user: { userId, uniqueId: userId }, comment });
-
-test('ranks by observed diamonds with three display slots', () => {
-  const engine = new MemeEngine();
-  for (const [id, diamonds] of [['a', 5], ['b', 20], ['c', 10], ['d', 40]]) {
-    engine.recordGift(gift(id, diamonds));
-  }
-  assert.deepEqual(engine.top3().map(x => x.userId), ['d', 'b', 'c']);
-  assert.deepEqual(engine.top3().map(x => x.rank), [1, 2, 3]);
+test('badges detect moderators in root and nested schemas, never nickname-only', () => {
+  assert.equal(isVerifiedModerator({userBadges:[{type:'pm_mt_moderator_im'}]}),true);
+  assert.equal(isVerifiedModerator({user:{badges:[{type:'moderator'}]}}),true);
+  assert.equal(isVerifiedModerator({user:{isModerator:false},comment:'hello'}),false);
+  assert.equal(isVerifiedModerator({nickname:'Moderator'}),false);
 });
-
-test('gift streak progress ignored and completed streak counted exactly once', () => {
-  const engine = new MemeEngine();
-  assert.equal(engine.recordGift(gift('a', 2, { giftType: 1, repeatEnd: false, repeatCount: 3 })), false);
-  assert.equal(engine.recordGift(gift('a', 2, { giftType: 1, repeatEnd: true, repeatCount: 3 })), true);
-  assert.equal(engine.top3()[0].diamonds, 6);
+test('manual moderator usernames normalize, persist in engine, and require observed events', () => {
+  const e=new MemeEngine({manualMods:['@Alice','bob']});
+  assert.deepEqual(e.activeMods(),[]);
+  assert.equal(e.observe(event('Alice',false)),true);
+  assert.equal(e.activeMods().length,1);
+  assert.equal(e.activeMods()[0].manual,true);
+  assert.equal(e.observe({user:{userId:'id:nick',nickname:'alice'}}),false);
+  assert.deepEqual(e.setManualMods(['@BoB']),['bob']);
+  assert.deepEqual(e.activeMods(),[]);
+  assert.equal(e.observe(event('bob',false)),true);
+  assert.equal(e.activeMods().length,1);
 });
-
-test('only !meme from current top three works; no random trigger', () => {
-  const engine = new MemeEngine({ now: () => 1_000, random: () => .999 });
-  engine.recordGift(gift('a', 5));
-  engine.recordGift(gift('b', 4));
-  engine.recordGift(gift('c', 3));
-  engine.recordGift(gift('d', 2));
-  assert.equal(engine.handleChat(chat('d'), ['one.png']).reason, 'not-top-three');
-  assert.equal(engine.handleChat(chat('a', '!dance'), ['one.png']).reason, 'not-command');
-  assert.equal(engine.remaining(), 0);
-  const result = engine.handleChat(chat('a', ' !MEME '), ['a.png', 'b.png']);
-  assert.equal(result.ok, true);
-  assert.equal(result.event.filename, 'b.png');
+test('malformed usernames and excessive lists are rejected', () => {
+  assert.equal(normalizeUsername('@Valid_Name.2'),'valid_name.2');
+  assert.equal(normalizeUsername('../bad/name'),'');
+  const e=new MemeEngine();
+  assert.throws(()=>e.setManualMods(['hello','@bad username']),/username/);
+  assert.throws(()=>e.setManualMods(Array(501).fill('mod')),/Too many/);
 });
-
-test('one global two minute cooldown, failed commands do not consume it', () => {
-  let clock = 10_000;
-  const engine = new MemeEngine({ now: () => clock, random: () => 0 });
-  engine.recordGift(gift('a', 5));
-  engine.recordGift(gift('b', 2));
-  assert.equal(engine.handleChat(chat('a'), []).reason, 'no-memes');
-  assert.equal(engine.remaining(), 0);
-  assert.equal(engine.handleChat(chat('a'), ['test.png']).ok, true);
-  clock += 119_999;
-  assert.equal(engine.handleChat(chat('b'), ['test.png']).reason, 'cooldown');
-  assert.equal(engine.remaining(), 1);
-  clock += 1;
-  assert.equal(engine.handleChat(chat('b'), ['test.png']).ok, true);
-  assert.equal(engine.remaining(), 120_000);
-  engine.reset();
-  assert.equal(engine.remaining(), 0);
-  assert.deepEqual(engine.top3(), []);
+test('10 second global cooldown only consumed by a successful moderator command', () => {
+  let now=11000;
+  const e=new MemeEngine({now:()=>now,random:()=>.999});
+  assert.equal(COOLDOWN_MS,10000);
+  assert.equal(e.handleChat(event('outsider',false),['m.png']).reason,'not-moderator');
+  assert.equal(e.handleChat(event('modA'),[]).reason,'no-memes');
+  assert.equal(e.remaining(),0);
+  assert.equal(e.handleChat(event('modA','true'),['one.png','two.png']).ok,true);
+  assert.equal(e.remaining(),10000);
+  now+=9999;
+  assert.equal(e.handleChat(event('modB'),['one.png']).reason,'cooldown');
+  assert.equal(e.remaining(),1);
+  now++;
+  const next=e.handleChat(event('modB'),['one.png','two.png']);
+  assert.equal(next.ok,true);
+  assert.equal(next.event.filename,'two.png');
+  e.reset();
+  assert.equal(e.remaining(),0);
+  assert.equal(e.activeMods().length,0);
 });
-
-test('invalid gift data does not corrupt ranking', () => {
-  const engine = new MemeEngine();
-  assert.equal(engine.recordGift(gift('a', NaN)), false);
-  assert.equal(engine.recordGift(gift('a', -10)), false);
-  assert.deepEqual(engine.top3(), []);
+test('manual mods can command without role info; removal immediately revokes access', () => {
+  const e=new MemeEngine({manualMods:['trusted']});
+  const p=event('trusted',false);
+  assert.equal(e.handleChat(p,['a.png']).ok,true);
+  e.setManualMods([]);
+  assert.equal(e.handleChat(p,['a.png']).reason,'not-moderator');
+});
+test('non-meme messages do not trigger automatic memes', () => {
+  const e=new MemeEngine();
+  assert.equal(e.handleChat({...event('mod'),comment:'hello'},['a.png']).reason,'not-command');
+  assert.equal(e.remaining(),0);
 });

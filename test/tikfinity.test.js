@@ -16,44 +16,33 @@ function until(check, timeoutMs = 2500) {
     }, 15);
   });
 }
-
-test('TikFinity Desktop WebSocket feeds gift and chat and retains meme rules', async t => {
-  const host = new WebSocketServer({ host: '127.0.0.1', port: 0 });
-  await once(host, 'listening');
-  const port = host.address().port;
-  const events = [];
-  const states = [];
-  const engine = new MemeEngine({ random: () => 0 });
-  const source = new TikFinitySource({
-    url: 'ws://127.0.0.1:' + port + '/',
-    reconnectMs: 70,
-    onStatus: (state) => states.push(state),
-    onEvent: (kind, data) => {
-      events.push(kind);
-      if (kind === 'gift') engine.recordGift(data);
-      if (kind === 'chat') events.push(engine.handleChat(data, ['meme.png']));
-    }
-  });
-  t.after(() => { source.stop(); for (const client of host.clients) client.terminate(); host.close(); });
-  source.start();
-  await until(() => states.includes('connected'));
-  const serverSocket = [...host.clients][0];
-  serverSocket.send(JSON.stringify({ event: 'config', data: { example: true } }));
-  serverSocket.send(JSON.stringify({ event: 'gift', data: {
-    user: { userId: '123', uniqueId: 'memeFan', profilePictureUrl: 'https://example.com/pfp.png' },
-    diamondCount: 5, repeatCount: 2
-  }}));
-  serverSocket.send(JSON.stringify({ event: 'chat', data: {
-    user: { userId: '123', uniqueId: 'memeFan' }, comment: '!meme'
-  }}));
-  await until(() => events.length >= 3);
-  assert.equal(engine.top3()[0].diamonds, 10);
-  assert.equal(events[0], 'gift');
-  assert.equal(events[1], 'chat');
-  assert.equal(events[2].ok, true);
-  assert.equal(events[2].event.filename, 'meme.png');
-  assert.ok(engine.remaining() > 0);
-  assert.deepEqual(states.slice(0, 2), ['connecting', 'connected']);
+test('TikFinity sends mod chat and filters ordinary viewers before triggering memes',async t=>{
+ const host=new WebSocketServer({host:'127.0.0.1',port:0});
+ await once(host,'listening');
+ const packets=[];
+ const engine=new MemeEngine();
+ const source=new TikFinitySource({
+  url:'ws://127.0.0.1:'+host.address().port+'/',reconnectMs:70,
+  onEvent:(kind,data)=>{
+   packets.push(kind);
+   if(kind==='chat'){
+    engine.observe(data);
+    packets.push(engine.handleChat(data,['one.png']));
+   }else{ engine.observe(data); }
+  }
+ });
+ t.after(()=>{source.stop();for(const client of host.clients)client.terminate();host.close();});
+ source.start();
+ await until(()=>source.state==='connected');
+ const peer=[...host.clients][0];
+ peer.send(JSON.stringify({event:'chat',data:{user:{userId:'regular',uniqueId:'regular'},comment:'!meme'}}));
+ peer.send(JSON.stringify({event:'chat',data:{user:{userId:'mod',uniqueId:'mod',isModerator:true},comment:'!meme'}}));
+ await until(()=>packets.length===4);
+ assert.equal(engine.activeMods().length,1);
+ assert.equal(engine.activeMods()[0].username,'mod');
+ assert.equal(packets[1].reason,'not-moderator');
+ assert.equal(packets[3].ok,true);
+ assert.equal(engine.remaining()>0,true);
 });
 
 test('TikFinity socket failure retries and recovers without needing a new click', async t => {

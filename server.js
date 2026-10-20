@@ -2,7 +2,7 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { MemeEngine } from './src/engine.js';
+import { MemeEngine, normalizeUsername } from './src/engine.js';
 import { TikFinitySource } from './src/tikfinity.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -10,7 +10,12 @@ const pub = path.join(root, 'public');
 const memeDir = process.env.MEMES_DIR ? path.resolve(process.env.MEMES_DIR) : path.join(root, 'memes');
 const port = Number(process.env.PORT || 3927);
 const host = '127.0.0.1';
+const modsFile = path.join(path.dirname(memeDir), 'mods.txt');
+fs.mkdirSync(path.dirname(modsFile), { recursive: true });
+if (!fs.existsSync(modsFile)) fs.writeFileSync(modsFile, '# One TikTok moderator username per line. No @ needed.\n');
+const savedMods = fs.readFileSync(modsFile, 'utf8').split(/\r?\n/).filter(line => !/^\s*#/.test(line)).map(line => line.trim()).filter(Boolean);
 const engine = new MemeEngine();
+try { engine.setManualMods(savedMods); } catch (error) { console.warn('Invalid mods.txt:', error.message); }
 const listeners = new Set();
 let live = null;
 let mode = 'idle';
@@ -28,7 +33,7 @@ function pngFiles() {
 }
 function snapshot() {
   return {
-    mode, message, streamer, top3: engine.top3(),
+    mode, message, streamer, activeMods: engine.activeMods(), manualMods: [...engine.manualMods].sort(),
     memes: pngFiles(), cooldownMs: engine.cooldownMs,
     cooldownUntil: engine.lastMemeAt === null ? 0 : engine.lastMemeAt + engine.cooldownMs
   };
@@ -40,10 +45,11 @@ function broadcast(packet) {
   }
 }
 function pushState() { broadcast({ type: 'state', state: snapshot() }); }
-function gift(data) {
-  if (engine.recordGift(data)) pushState();
+function observeViewer(data) {
+  if (engine.observe(data)) pushState();
 }
 function comment(data) {
+  observeViewer(data);
   const result = engine.handleChat(data, pngFiles());
   if (!result.ok) return result;
   broadcast({ type: 'meme', event: result.event });
@@ -67,14 +73,9 @@ function connect() {
       pushState();
     },
     onEvent(eventName, data) {
-      if (eventName === 'gift') gift(data);
-      if (eventName === 'chat') {
-        if (engine.recordActivity('chat', data)) pushState();
-        comment(data);
-      }
-      if (['like','follow','share','subscribe','member','roomUser'].includes(eventName)) {
-        if (engine.recordActivity(eventName, data)) pushState();
-      }
+      // Only known/verified moderators are admitted to the desktop.
+      if (eventName === 'chat') comment(data);
+      else observeViewer(data);
     }
   });
   live.start();
@@ -150,34 +151,30 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/reset') {
       engine.reset(); pushState(); return json(res, 200, snapshot());
     }
-    if (url.pathname === '/api/test/gift') {
-      const username = String(data.username || '').trim().replace(/^@/, '').slice(0, 40);
-      const diamonds = Number(data.diamonds);
-      if (!username || !Number.isInteger(diamonds) || diamonds <= 0 || diamonds > 100_000) {
-        return json(res, 400, { error: 'Enter a username and 1–100000 diamonds' });
-      }
-      gift({ user: { userId: 'test:' + username.toLowerCase(), uniqueId: username }, diamondCount: diamonds });
+    if (url.pathname === '/api/mods') {
+      if (!Array.isArray(data.usernames)) return json(res, 400, { error: 'Expected moderator usernames list' });
+      const names = engine.setManualMods(data.usernames);
+      fs.writeFileSync(modsFile, '# Manual TikTok moderators, one per line.\n' + names.join('\n') + (names.length ? '\n' : ''), 'utf8');
+      pushState();
       return json(res, 200, snapshot());
     }
-    if (url.pathname === '/api/test/activity') {
-      const username = String(data.username || '').trim().replace(/^@/, '').slice(0, 40);
-      const type = String(data.type || '');
-      if (!/^[a-zA-Z0-9._]{2,40}$/.test(username) || !['chat','like','follow','share','member','subscribe'].includes(type)) {
-        return json(res, 400, { error: 'Choose a valid test username and activity type' });
-      }
-      const user = { userId: 'test:' + username.toLowerCase(), uniqueId: username };
-      const eventData = type === 'chat' ? { user, comment: 'Hello LIVE!' }
-        : type === 'like' ? { user, likeCount: 10 }
-        : { user };
-      if (engine.recordActivity(type, eventData)) pushState();
+    if (url.pathname === '/api/test/mod') {
+      const username = normalizeUsername(data.username);
+      if (!username) return json(res, 400, { error: 'Enter a TikTok username for the test mod' });
+      const eventData = { user: {
+        userId: 'test:' + username, uniqueId: username, isModerator: true,
+        profilePictureUrl: ''
+      }, comment: 'Hello chat!' };
+      observeViewer(eventData);
       return json(res, 200, snapshot());
     }
     if (url.pathname === '/api/test/chat') {
-      const username = String(data.username || '').trim().replace(/^@/, '');
-      const candidate = engine.top3().find(u => u.username.toLowerCase() === username.toLowerCase());
-      if (!candidate) return json(res, 400, { error: 'Choose a current top-three user' });
+      const username = normalizeUsername(data.username);
+      const candidate = engine.activeMods().find(u => u.username === username);
+      if (!candidate) return json(res, 400, { error: 'Choose a current moderator buddy' });
       const result = comment({ user: { userId: candidate.userId, uniqueId: candidate.username }, comment: '!meme' });
-      return json(res, result.ok ? 200 : 400, result.ok ? { event: result.event } : { error: result.reason, remainingMs: result.remainingMs || 0 });
+      return json(res, result.ok ? 200 : 400,
+        result.ok ? { event: result.event } : { error: result.reason, remainingMs: result.remainingMs || 0 });
     }
     return json(res, 404, { error: 'Unknown action' });
   } catch (error) {
