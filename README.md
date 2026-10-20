@@ -9,7 +9,18 @@ A local TikTok LIVE Studio overlay that turns the **top three gifters** into wan
 - **One shared 120-second cooldown** starts only after a successful meme command. No random meme triggers.
 - A random PNG from the local `memes/` folder is dragged on screen. No desktop files or windows are touched.
 
-## Quick start (Windows, with Node.js 20+ installed)
+## Windows portable EXE (no Node.js required)
+
+1. Visit **[Releases](https://github.com/Cyberspectraa/Meme-Buddies/releases)** and download **Meme-Buddies-Windows.exe**.
+2. Place the EXE in a folder you control, for example `Documents/Meme Buddies`, and double-click it.
+3. Click **Open memes folder** in the app and put your PNG meme images there. The folder sits beside the portable EXE.
+4. Use **Test gift** with three fake viewers, then **Test !meme**.
+5. Enter your TikTok username and connect during your LIVE.
+6. In TikTok LIVE Studio, add a full-scene **Link/Browser** source pointing at `http://127.0.0.1:3927/overlay`. Keep the app open while streaming.
+
+**Note:** This build is unsigned, so Windows may show a SmartScreen warning. Download it only from the project release page.
+
+## Run from source (Node.js 20+ installed)
 
 1. Download this repository or clone it, then open a terminal in its folder.
 2. Run `npm install` followed by `npm start`.

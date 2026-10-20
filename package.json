@@ -1,13 +1,40 @@
 {
   "name": "meme-buddies",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
+  "main": "desktop/main.cjs",
   "description": "Top three TikTok gifters as chaotic PFP overlay buddies for LIVE Studio",
   "scripts": {
     "start": "node server.js",
+    "desktop": "electron .",
+    "build:win": "electron-builder --win portable --x64",
     "test": "node --test"
   },
   "engines": { "node": ">=20" },
-  "dependencies": { "tiktok-live-connector": "2.4.0" }
+  "dependencies": { "tiktok-live-connector": "2.4.0" },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.cyberspectraa.memebuddies",
+    "productName": "Meme Buddies",
+    "asar": true,
+    "files": [
+      "desktop/**/*",
+      "server.js",
+      "src/**/*",
+      "public/**/*",
+      "package.json",
+      "memes/.gitkeep"
+    ],
+    "win": {
+      "target": [
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "signExecutable": false
+    },
+    "portable": { "artifactName": "Meme-Buddies-Windows.exe" }
+  }
 }

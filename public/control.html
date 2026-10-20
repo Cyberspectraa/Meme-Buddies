@@ -35,7 +35,8 @@ code{color:#f4d9ff;background:#38294c;padding:3px 7px;border-radius:5px}
 <form id="meme"><label>Simulate a current top-3 person typing !meme</label><div class="line"><select id="memeUser"><option value="">Add a test gifter first</option></select><button>Test !meme</button></div></form>
 <button id="reset" class="warn">Reset leaderboard + cooldown</button><p id="feedback" role="status"></p></section>
 <section class="card"><h2>PNG meme library <span id="count" class="status">0 files</span></h2>
-<p class="muted">Add PNG images directly to the folder <code>memes/</code> next to server.js, then type !meme on live.</p>
+<p class="muted">Add PNG images to the <code>memes</code> folder beside the portable EXE (or next to server.js when running source), then type !meme on live.</p>
+<button type="button" class="alt" id="openFolder" style="margin-top:12px">Open memes folder</button>
 <ul id="files"><li>No PNGs yet</li></ul>
 <p class="rules">No automatic meme drops. Every accepted command picks a random PNG from this folder. Profile pictures still wander automatically. Files added to the folder are picked up on the next command.</p></section></div>
 <p class="muted" style="margin-top:24px;text-align:center">Local-only control panel • Keep this window's server running while live • Unofficial TikTok integration</p></main>
@@ -85,6 +86,7 @@ $('disconnect').onclick=()=>post('disconnect');
 $('reset').onclick=()=>post('reset');
 $('gift').addEventListener('submit',async e=>{e.preventDefault();await post('test/gift',{username:$('testUser').value,diamonds:Number($('diamonds').value)});});
 $('meme').addEventListener('submit',async e=>{e.preventDefault();await post('test/chat',{username:$('memeUser').value});});
+$('openFolder').onclick=async()=>{try{if(!window.memeDesktop)throw new Error('Open the portable desktop app to use this button');const result=await window.memeDesktop.openMemesFolder();if(result)throw new Error(result);$('feedback').textContent='Opened memes folder';}catch(e){$('feedback').textContent=e.message;}};
 $('copy').onclick=async()=>{await navigator.clipboard.writeText($('url').value);$('feedback').textContent='Overlay link copied';};
 fetch('/api/state').then(r=>r.json()).then(render);
 const sse=new EventSource('/events');

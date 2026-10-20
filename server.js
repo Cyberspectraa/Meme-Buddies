@@ -6,7 +6,7 @@ import { MemeEngine } from './src/engine.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const pub = path.join(root, 'public');
-const memeDir = path.join(root, 'memes');
+const memeDir = process.env.MEMES_DIR ? path.resolve(process.env.MEMES_DIR) : path.join(root, 'memes');
 const port = Number(process.env.PORT || 3927);
 const host = '127.0.0.1';
 const engine = new MemeEngine();
@@ -198,3 +198,5 @@ server.listen(port, host, () => {
   console.log('TikTok Studio source: http://' + host + ':' + port + '/overlay');
 });
 process.on('SIGINT', () => { clearInterval(ticker); server.close(); void disconnect().finally(() => process.exit(0)); });
+
+export { server };
