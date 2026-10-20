@@ -3,6 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { MemeEngine } from './src/engine.js';
+import { TikFinitySource } from './src/tikfinity.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const pub = path.join(root, 'public');
@@ -12,10 +13,9 @@ const host = '127.0.0.1';
 const engine = new MemeEngine();
 const listeners = new Set();
 let live = null;
-let generation = 0;
 let mode = 'idle';
 let message = 'Test mode ready';
-let streamer = '';
+let streamer = 'TikFinity Desktop';
 
 fs.mkdirSync(memeDir, { recursive: true });
 
@@ -51,53 +51,27 @@ function comment(data) {
   return result;
 }
 
-async function disconnect() {
-  ++generation;
-  const old = live;
+function disconnect() {
+  if (live) live.stop();
   live = null;
-  if (old) {
-    try { await old.disconnect(); } catch (error) { console.warn('Disconnect:', error.message); }
-  }
   mode = 'idle';
-  message = 'Disconnected';
-  streamer = '';
+  message = 'Disconnected from TikFinity. Test mode remains available.';
   pushState();
 }
-async function connect(handle) {
-  const name = String(handle || '').trim().replace(/^@/, '');
-  if (!/^[a-zA-Z0-9._]{2,30}$/.test(name)) throw new Error('Enter a valid TikTok username.');
-  await disconnect();
-  engine.reset();
-  const sequence = ++generation;
-  mode = 'connecting'; streamer = name; message = 'Connecting to @' + name;
-  pushState();
-  try {
-    const { TikTokLiveConnection, WebcastEvent, ControlEvent } = await import('tiktok-live-connector');
-    if (sequence !== generation) return;
-    const conn = new TikTokLiveConnection(name, { enableExtendedGiftInfo: true });
-    live = conn;
-    conn.on(WebcastEvent.GIFT || 'gift', data => { if (sequence === generation) gift(data); });
-    conn.on(WebcastEvent.CHAT || 'chat', data => { if (sequence === generation) comment(data); });
-    conn.on(ControlEvent.DISCONNECTED || 'disconnected', () => {
-      if (sequence !== generation) return;
-      mode = 'offline'; message = 'TikTok disconnected. Reconnect from the dashboard.'; pushState();
-    });
-    conn.on(ControlEvent.ERROR || 'error', error => {
-      if (sequence !== generation) return;
-      mode = 'error'; message = 'TikTok: ' + String(error?.message || error); pushState();
-    });
-    await conn.connect();
-    if (sequence !== generation) { await conn.disconnect(); return; }
-    mode = 'connected'; message = 'Connected to @' + name; pushState();
-  } catch (error) {
-    if (sequence === generation) {
-      live = null;
-      mode = 'error';
-      message = String(error?.message || error);
+function connect() {
+  if (live?.active) return;
+  live = new TikFinitySource({
+    onStatus(state, detail) {
+      mode = state;
+      message = detail;
       pushState();
+    },
+    onEvent(eventName, data) {
+      if (eventName === 'gift') gift(data);
+      if (eventName === 'chat') comment(data);
     }
-    throw error;
-  }
+  });
+  live.start();
 }
 function json(res, code, value) {
   res.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
@@ -161,11 +135,11 @@ const server = http.createServer(async (req, res) => {
     }
     const data = await body(req);
     if (url.pathname === '/api/connect') {
-      await connect(data.username);
+      connect();
       return json(res, 200, snapshot());
     }
     if (url.pathname === '/api/disconnect') {
-      await disconnect(); return json(res, 200, snapshot());
+      disconnect(); return json(res, 200, snapshot());
     }
     if (url.pathname === '/api/reset') {
       engine.reset(); pushState(); return json(res, 200, snapshot());
@@ -197,6 +171,6 @@ server.listen(port, host, () => {
   console.log('Meme Buddies control: http://' + host + ':' + port + '/');
   console.log('TikTok Studio source: http://' + host + ':' + port + '/overlay');
 });
-process.on('SIGINT', () => { clearInterval(ticker); server.close(); void disconnect().finally(() => process.exit(0)); });
+process.on('SIGINT', () => { clearInterval(ticker); server.close(); disconnect(); process.exit(0); });
 
 export { server };

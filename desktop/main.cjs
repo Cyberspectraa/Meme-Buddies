@@ -47,6 +47,9 @@ if (!gotLock) {
       });
       dashboard.webContents.setWindowOpenHandler(({ url }) => {
         if (url === 'http://127.0.0.1:3927/overlay') return { action: 'allow' };
+        if (url === 'https://tikfinity.com/' || url.startsWith('https://tikfinity.com/')) {
+          void shell.openExternal(url);
+        }
         return { action: 'deny' };
       });
       dashboard.webContents.on('will-navigate', (event, url) => {

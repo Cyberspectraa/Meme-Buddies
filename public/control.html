@@ -20,13 +20,14 @@ code{color:#f4d9ff;background:#38294c;padding:3px 7px;border-radius:5px}
 <body><main><header><div class="logo">MB</div><div><h1>Meme Buddies</h1><p>Top 3 TikTok gifters. Mischievous profile-picture pets.</p></div></header>
 <div class="grid">
 <section class="card"><h2>Live connection <span id="status" class="status">Idle</span></h2><p class="muted" id="message">Test mode ready</p>
-<form id="connect"><label>TikTok username (your account)</label><div class="line"><input id="handle" required placeholder="yourusername"><button>Connect</button></div></form>
+<p class="muted" style="margin-top:14px">1. Open <a href="https://tikfinity.com/" target="_blank" rel="noopener" style="margin:0">TikFinity Desktop</a> on this PC and connect it to your TikTok LIVE.<br>2. Click below to connect Meme Buddies to TikFinity's local Event API.<br>3. Keep both apps running during the stream.</p>
+<form id="connect"><button style="margin-top:16px">Connect to TikFinity</button></form>
 <button class="alt" id="disconnect" style="margin-top:12px">Disconnect</button>
 <hr style="border:0;border-top:1px solid #3a364c;margin:22px 0">
 <h2>LIVE Studio link</h2><p class="muted">Add this URL as a full-screen Link/Browser source in TikTok LIVE Studio with a transparent background.</p>
 <div class="line"><input id="url" readonly><button class="alt" id="copy">Copy</button></div>
 <a href="/overlay" target="_blank" rel="noopener">Open overlay preview ↗</a></section>
-<section class="card"><h2>Top 3 gifters</h2><p class="muted">Ranked by diamonds detected since connect/reset.</p>
+<section class="card"><h2>Top 3 gifters</h2><p class="muted">Ranked by gifts received while Meme Buddies is running (or since Reset). Reconnecting preserves the ranking.</p>
 <ol id="top"><li class="muted">No gifts yet</li></ol>
 <p class="rules">Only these 3 viewers can type <code>!meme</code> to drag a random PNG.</p>
 <div class="bottom"><span>Global cooldown: 2 minutes</span><strong id="cooldown">Ready</strong></div></section>
@@ -38,8 +39,8 @@ code{color:#f4d9ff;background:#38294c;padding:3px 7px;border-radius:5px}
 <p class="muted">Add PNG images to the <code>memes</code> folder beside the portable EXE (or next to server.js when running source), then type !meme on live.</p>
 <button type="button" class="alt" id="openFolder" style="margin-top:12px">Open memes folder</button>
 <ul id="files"><li>No PNGs yet</li></ul>
-<p class="rules">No automatic meme drops. Every accepted command picks a random PNG from this folder. Profile pictures still wander automatically. Files added to the folder are picked up on the next command.</p></section></div>
-<p class="muted" style="margin-top:24px;text-align:center">Local-only control panel • Keep this window's server running while live • Unofficial TikTok integration</p></main>
+<p class="rules">No automatic meme drops. Every accepted chat command picks a random PNG from this folder. Profile pictures still wander automatically. Files added to the folder are picked up on the next command.</p></section></div>
+<p class="muted" style="margin-top:24px;text-align:center">Local-only control panel • TikFinity Desktop must run on this PC • No EulerStream key required</p></main>
 <script>
 const $ = id => document.getElementById(id);
 let current = null;
@@ -81,7 +82,7 @@ function updateClock() {
  const sec=Math.max(0,Math.ceil((current.cooldownUntil-Date.now())/1000));
  $('cooldown').textContent=sec ? Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0') : 'Ready';
 }
-$('connect').addEventListener('submit',async e=>{e.preventDefault();await post('connect',{username:$('handle').value});});
+$('connect').addEventListener('submit',async e=>{e.preventDefault();await post('connect');});
 $('disconnect').onclick=()=>post('disconnect');
 $('reset').onclick=()=>post('reset');
 $('gift').addEventListener('submit',async e=>{e.preventDefault();await post('test/gift',{username:$('testUser').value,diamonds:Number($('diamonds').value)});});

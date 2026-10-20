@@ -33,10 +33,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "v0.2.0"
+          $tag = "v0.3.0"
           gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Meme Buddies v0.2.0" --notes "Portable Windows x64 app for TikTok LIVE Studio. Double-click the EXE, put PNGs in the memes folder beside it, and use !meme (current top-three gifters only, with one global two-minute cooldown). Unsigned; Windows may warn."
+            gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Meme Buddies v0.3.0" --notes "Portable Windows x64 app for TikTok LIVE Studio using TikFinity Desktop's local Event API instead of EulerStream. Start TikFinity Desktop, connect your LIVE, then click Connect to TikFinity in Meme Buddies. Put PNGs next to the EXE in the memes folder. Top-three gifters can trigger !meme with a shared 2-minute cooldown. Unsigned; Windows may warn."
             if ($LASTEXITCODE -ne 0) { exit 1 }
           }
           gh release upload $tag dist/Meme-Buddies-Windows.exe --repo $env:GITHUB_REPOSITORY --clobber

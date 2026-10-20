@@ -1,6 +1,6 @@
 {
   "name": "meme-buddies",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "desktop/main.cjs",
@@ -11,8 +11,12 @@
     "build:win": "electron-builder --win portable --x64",
     "test": "node --test"
   },
-  "engines": { "node": ">=20" },
-  "dependencies": { "tiktok-live-connector": "2.4.0" },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
   "devDependencies": {
     "electron": "^37.0.0",
     "electron-builder": "^26.0.0"
@@ -31,10 +35,17 @@
     ],
     "win": {
       "target": [
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "signExecutable": false
     },
-    "portable": { "artifactName": "Meme-Buddies-Windows.exe" }
+    "portable": {
+      "artifactName": "Meme-Buddies-Windows.exe"
+    }
   }
 }
